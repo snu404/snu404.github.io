@@ -265,9 +265,10 @@ function escapeHTML(s){
     for(let i=0;i<ecLength;i++) a = a.multiply(new QRPolynomial([1, gexp(i)], 0));
     return a;
   }
-  const MODULE_COUNT = 25; // version 2
-  const DATA_CODEWORDS = 28;
-  const EC_CODEWORDS = 16;
+
+  const MODULE_COUNT = 29; // ✅ version 3 (29x29)
+  const DATA_CODEWORDS = 44; // ✅ 3-M data codewords
+  const EC_CODEWORDS = 26;   // ✅ 3-M ec codewords (single block)
 
   function createDataBytes(text){
     let bytes = [];
@@ -320,7 +321,7 @@ function escapeHTML(s){
         }
       }
     }
-    alignment(18,18);
+    alignment(22,22); // ✅ version 3 alignment center
     m[MODULE_COUNT-8][8] = true;
     return m;
   }
