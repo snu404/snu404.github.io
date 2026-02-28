@@ -99,6 +99,11 @@
 <main id="app"></main>
 
 <script>
+/* =========================================================
+   ✅ FIX: QR codes & Copy Link always use this fixed URL
+========================================================= */
+const BASE_URL = "https://snu404.github.io/ME211_quiz1.html";
+
 /* -------------------------
    Quiz data (10 conceptual)
 -------------------------- */
@@ -384,12 +389,12 @@ function escapeHTML(s){
 -------------------------- */
 function computeAggregateStats(db) {
   const stats = quiz.map((_, qi) => ({
-    totalAttempts: 0,   // counts attempts where question is present (always) but we treat unanswered separately
+    totalAttempts: 0,
     answered: 0,
     correct: 0,
     wrong: 0,
     unanswered: 0,
-    choiceCount: [0,0,0,0] // A/B/C/D among answered
+    choiceCount: [0,0,0,0]
   }));
 
   const studentIds = Object.keys(db.students || {});
@@ -426,18 +431,15 @@ let studentId = (db.currentStudentId || "").trim();
 function renderAll() {
   app.innerHTML = "";
 
-  // Student ID required panel (if missing)
   if (!studentId) {
     app.appendChild(renderStudentGate());
     wireStudentGate();
-    // still render QR + teacher note
     app.appendChild(renderQRPanelOnly());
     wireQRPanelOnly();
     refreshQR();
     return;
   }
 
-  // Main panels
   app.appendChild(renderTopPanel());
   app.appendChild(renderQuestions());
   app.appendChild(renderBottomControls());
@@ -496,7 +498,7 @@ function renderQRPanelOnly() {
       <canvas id="qrCanvas" width="220" height="220"></canvas>
       <div style="min-width: 240px;">
         <div class="mini">
-          QR encodes the <b>current URL</b>. Host this file online (GitHub Pages / lab server) for easy phone access.
+          QR encodes the <b>quiz URL</b>. Host this file online (GitHub Pages / lab server) for easy phone access.
         </div>
         <div style="height:10px;"></div>
         <div class="btnrow" style="gap:8px;">
@@ -513,7 +515,7 @@ function wireQRPanelOnly() {
   document.getElementById("btnCopyLink")?.addEventListener("click", copyLink);
   document.getElementById("btnRefreshQR")?.addEventListener("click", refreshQR);
   const linkText = document.getElementById("linkText");
-  if (linkText) linkText.textContent = location.href;
+  if (linkText) linkText.textContent = BASE_URL;  // ✅ fixed
 }
 
 function renderTopPanel() {
@@ -541,7 +543,7 @@ function renderTopPanel() {
         <div class="qrWrap">
           <canvas id="qrCanvas" width="220" height="220"></canvas>
           <div style="min-width: 240px;">
-            <div class="mini">Scan to open this page URL on your phone.</div>
+            <div class="mini">Scan to open this quiz on your phone.</div>
             <div style="height:10px;"></div>
             <div class="btnrow" style="gap:8px;">
               <button class="ghost smallBtn" id="btnCopyLink">Copy Link</button>
@@ -689,6 +691,10 @@ function wireTopPanel() {
     setStudentId(val.trim());
   });
 
+  // ✅ ensure linkText shows fixed URL
+  const linkText = document.getElementById("linkText");
+  if (linkText) linkText.textContent = BASE_URL;
+
   if (TEACHER_MODE) {
     const toggle = document.getElementById("toggleShowCorrect");
     if (toggle) {
@@ -713,17 +719,19 @@ function wireQuestionsControls() {
   document.getElementById("btnReset")?.addEventListener("click", resetQuiz);
 }
 
+/* ✅ FIXED: copy fixed URL */
 function copyLink() {
-  const url = location.href;
+  const url = BASE_URL;
   navigator.clipboard?.writeText(url)
     .then(()=>alert("Link copied to clipboard."))
     .catch(()=>prompt("Copy this link:", url));
 }
 
+/* ✅ FIXED: QR encodes fixed URL */
 function refreshQR() {
   const canvas = document.getElementById("qrCanvas");
   if (!canvas || !window.__makeQRCodeCanvas) return;
-  const url = location.href;
+  const url = BASE_URL;
   window.__makeQRCodeCanvas(url, canvas);
   const linkText = document.getElementById("linkText");
   if (linkText) linkText.textContent = url;
@@ -737,7 +745,6 @@ function refreshStudentPanels() {
   ensureStudent(db, studentId);
   saveDB(db);
 
-  // my history
   const s = db.students[studentId];
   const body = document.getElementById("myHistBody");
   if (body) {
@@ -760,10 +767,8 @@ function refreshStudentPanels() {
     }
   }
 
-  // my wrong notes
   refreshWrongNotes();
 
-  // teacher stats
   if (TEACHER_MODE) refreshStats();
 }
 
@@ -864,7 +869,6 @@ function revealCorrectHints() {
     hint.dataset.correctHint = "1";
     hint.style.marginTop = "6px";
     hint.innerHTML = `Correct answer: <b>${letter(item.answer)}</b>`;
-    // avoid duplicates
     if (!result.querySelector('[data-correct-hint="1"]')) result.appendChild(hint);
   });
 }
@@ -892,7 +896,7 @@ function gradeAndSave() {
 
     if (!chosen) {
       unanswered++;
-      if (result) result.innerHTML = `<span class="bad">Unanswered.</span> ${TEACHER_MODE && SHOW_CORRECT ? `Correct: <b>${letter(item.answer)}</b>` : `Correct: <b>${letter(item.answer)}</b>`}`;
+      if (result) result.innerHTML = `<span class="bad">Unanswered.</span> Correct: <b>${letter(item.answer)}</b>`;
       answers.push(null);
       wrongItems.push({ qIndex: idx, question: item.q, chosen: null, correct: item.answer });
       return;
@@ -945,7 +949,6 @@ function resetQuiz() {
   document.querySelectorAll(".result").forEach(r => r.textContent = "");
   document.querySelectorAll(".explain").forEach(e => e.style.display = "none");
   if (TEACHER_MODE) {
-    // keep correct hints setting, but remove existing hints until re-grade or toggle
     hideCorrectHints();
     if (SHOW_CORRECT) revealCorrectHints();
   }
