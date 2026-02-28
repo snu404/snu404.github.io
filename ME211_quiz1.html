@@ -66,8 +66,6 @@
     .explain { margin-top: 8px; padding: 10px; border-radius: 12px; background:#f3f4f6; font-size: 13px; line-height: 1.35; display:none; }
 
     .qrWrap { display:flex; gap:14px; align-items: center; flex-wrap: wrap; }
-    /* ✅ canvas 대신 img를 쓰므로, 기존 #qrCanvas 스타일은 필요 없지만 남겨도 무방 */
-    #qrCanvas { width: 180px; height: 180px; border-radius: 14px; border: 1px solid #e5e7eb; background: #fff; }
 
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th, td { border-bottom: 1px solid #eef2f7; padding: 10px 8px; text-align: left; vertical-align: top; }
@@ -91,20 +89,18 @@
 <body>
 <header>
   <h1>ME211A Lecture 1 Quiz</h1>
-<!--  <p>
-    Student ID-based saving + Teacher Mode + per-question statistics + QR.<br/>
-    Teacher Mode: add <span class="mono">?teacher=1</span> (or <span class="mono">#teacher</span>) to the URL.
-  </p> -->
 </header>
 
 <main id="app"></main>
 
 <script>
 /* =========================================================
-   ✅ FIX: QR codes always use this fixed URL
-   ✅ CHANGE: Use a reliable external QR generator (IMG)
+   QR + Google Sheet settings
 ========================================================= */
 const BASE_URL = "https://snu404.github.io/ME211_quiz1.html";
+
+/* ✅ 여기에 Apps Script Web App URL을 넣으세요 */
+const GOOGLE_SHEET_WEBAPP_URL = "PUT_YOUR_APPS_SCRIPT_WEBAPP_URL_HERE";
 
 /* -------------------------
    Quiz data (10 conceptual)
@@ -207,6 +203,34 @@ function escapeHTML(s){
 }
 
 /* -------------------------
+   ✅ Send attempt to Google Sheet via Apps Script
+-------------------------- */
+async function sendAttemptToGoogleSheet(payload) {
+  if (!GOOGLE_SHEET_WEBAPP_URL || GOOGLE_SHEET_WEBAPP_URL.includes("PUT_YOUR_")) {
+    console.warn("Google Sheet WebApp URL is not set. Skipping upload.");
+    return { ok: false, skipped: true };
+    // You could also alert here, but that may annoy students.
+  }
+
+  try {
+    const res = await fetch(GOOGLE_SHEET_WEBAPP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" }, // Apps Script friendly
+      body: JSON.stringify(payload),
+    });
+
+    // Apps Script usually returns JSON; if CORS blocks reading, this may throw.
+    // Still, the row often gets appended. We'll be robust:
+    let data = null;
+    try { data = await res.json(); } catch { data = { ok: res.ok }; }
+    return data;
+  } catch (err) {
+    console.warn("Failed to send to Google Sheet:", err);
+    return { ok: false, error: String(err) };
+  }
+}
+
+/* -------------------------
    Aggregate statistics across all students & attempts
 -------------------------- */
 function computeAggregateStats(db) {
@@ -282,9 +306,6 @@ function renderStudentGate() {
       <input id="studentIdInput" type="text" placeholder="e.g., 20261234" />
       <button class="primary smallBtn" id="btnSetStudent">Start</button>
     </div>
-<!--    <div class="mini muted" style="margin-top:10px;">
-      Teacher Mode: open this page with <span class="mono">?teacher=1</span>.
-    </div> -->
   `;
   return c;
 }
@@ -319,9 +340,6 @@ function renderQRPanelOnly() {
       <img id="qrImg" alt="QR"
            style="width:220px;height:220px;border-radius:14px;border:1px solid #e5e7eb;background:#fff;" />
       <div style="min-width: 240px;">
-      <!--  <div class="mini">
-          QR encodes the <b>quiz URL</b>. Host this file online (GitHub Pages / lab server) for easy phone access.
-        </div> -->
         <div style="height:10px;"></div>
         <div class="btnrow" style="gap:8px;">
           <button class="ghost smallBtn" id="btnCopyLink">Copy Link</button>
@@ -546,22 +564,14 @@ function copyLink() {
     .catch(()=>prompt("Copy this link:", url));
 }
 
-/* ✅ Reliable QR generation via image URL */
 function refreshQR() {
   const url = BASE_URL;
-
-  // NOTE: There are TWO QR panels (top + gate), and both use id="qrImg".
-  // getElementById returns the first one only; so we update all matching nodes:
   const imgs = document.querySelectorAll("#qrImg");
   if (!imgs.length) return;
 
-  // Use a simple, reliable QR image endpoint
-  // (Alternative) quickchart.io/qr?size=220&text=...
   const qrSrc = "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" + encodeURIComponent(url);
-
   imgs.forEach(img => { img.src = qrSrc; });
 
-  // linkText may exist twice too
   const linkTexts = document.querySelectorAll("#linkText");
   linkTexts.forEach(el => { el.textContent = url; });
 }
@@ -597,7 +607,6 @@ function refreshStudentPanels() {
   }
 
   refreshWrongNotes();
-
   if (TEACHER_MODE) refreshStats();
 }
 
@@ -686,9 +695,6 @@ function refreshStats() {
   `;
 }
 
-/* -------------------------
-   Teacher show-correct helper
--------------------------- */
 function revealCorrectHints() {
   quiz.forEach((item, idx) => {
     const result = document.getElementById(`result_${idx}`);
@@ -706,13 +712,16 @@ function hideCorrectHints() {
 }
 
 /* -------------------------
-   Grade + save (student-specific)
+   Grade + save + ✅ upload to Google Sheet
 -------------------------- */
-function gradeAndSave() {
+async function gradeAndSave() {
   db = loadDB();
   const s = ensureStudent(db, studentId);
 
-  const answers = [];
+  const answersNumeric = [];      // 0..3 or null
+  const answersLetter = [];       // "A"/"B"/"C"/"D" or ""
+  const correctAnswersLetter = []; // "A"/"B"/"C"/"D"
+  const perQuestionScore = [];    // 1/0
   const wrongItems = [];
   let score = 0;
   let unanswered = 0;
@@ -723,27 +732,35 @@ function gradeAndSave() {
     const explain = document.querySelector(`section[data-qindex="${idx}"] .explain`);
     if (explain) explain.style.display = "block";
 
+    const correctIdx = item.answer;
+    correctAnswersLetter.push(letter(correctIdx));
+
     if (!chosen) {
       unanswered++;
-      if (result) result.innerHTML = `<span class="bad">Unanswered.</span> Correct: <b>${letter(item.answer)}</b>`;
-      answers.push(null);
-      wrongItems.push({ qIndex: idx, question: item.q, chosen: null, correct: item.answer });
+      if (result) result.innerHTML = `<span class="bad">Unanswered.</span> Correct: <b>${letter(correctIdx)}</b>`;
+      answersNumeric.push(null);
+      answersLetter.push("");
+      perQuestionScore.push(0);
+      wrongItems.push({ qIndex: idx, question: item.q, chosen: null, correct: correctIdx });
       return;
     }
 
     const val = Number(chosen.value);
-    answers.push(val);
+    answersNumeric.push(val);
+    answersLetter.push(letter(val));
 
-    if (val === item.answer) {
+    if (val === correctIdx) {
       score++;
+      perQuestionScore.push(1);
       if (result) result.innerHTML = `<span class="ok">Correct.</span>`;
     } else {
-      if (result) result.innerHTML = `<span class="bad">Wrong.</span> You chose <b>${letter(val)}</b>, correct is <b>${letter(item.answer)}</b>.`;
-      wrongItems.push({ qIndex: idx, question: item.q, chosen: val, correct: item.answer });
+      perQuestionScore.push(0);
+      if (result) result.innerHTML = `<span class="bad">Wrong.</span> You chose <b>${letter(val)}</b>, correct is <b>${letter(correctIdx)}</b>.`;
+      wrongItems.push({ qIndex: idx, question: item.q, chosen: val, correct: correctIdx });
     }
   });
 
-  const attempt = { time: nowISO(), score, total: quiz.length, unanswered, answers };
+  const attempt = { time: nowISO(), score, total: quiz.length, unanswered, answers: answersNumeric };
   s.attempts = s.attempts || [];
   s.attempts.push(attempt);
 
@@ -765,6 +782,19 @@ function gradeAndSave() {
   db.students[studentId] = s;
   db.currentStudentId = studentId;
   saveDB(db);
+
+  // ✅ Upload to Google Sheet (non-blocking UX)
+  const payload = {
+    time: attempt.time,
+    studentId,
+    score,
+    total: quiz.length,
+    unanswered,
+    answers: answersLetter,              // A/B/C/D or ""
+    correctAnswers: correctAnswersLetter, // A/B/C/D
+    perQuestionScore,                    // 1/0
+  };
+  sendAttemptToGoogleSheet(payload); // intentionally not awaited
 
   alert(`Score: ${score} / ${quiz.length} (Unanswered: ${unanswered})\nSaved under Student ID: ${studentId}`);
   refreshStudentPanels();
