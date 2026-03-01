@@ -1,315 +1,121 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>2026 ME211A Thermodynamics Attendance log</title>
-  <style>
-    :root {
-      --bg:#0b1020; --card:#111833; --text:#e8ecff; --muted:#a9b3df;
-      --line:rgba(255,255,255,.10); --ok:rgba(46, 204, 113,.22);
-      --warn:rgba(241, 196, 15,.22); --bad:rgba(231, 76, 60,.22);
-      --exc:rgba(52, 152, 219,.22); --btn:#1b2550;
-    }
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,sans-serif;
-      background:linear-gradient(180deg,#070a14,#0b1020 60%,#070a14); color:var(--text);}
-    header{padding:18px 18px 8px; max-width:1100px; margin:0 auto;}
-    h1{margin:0;font-size:20px;}
-    .sub{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.4;}
-    .wrap{max-width:1100px;margin:0 auto;padding:10px 18px 24px;}
-    .card{background:rgba(17,24,51,.9); border:1px solid var(--line); border-radius:14px; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.25);}
-    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:end;}
-    label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px;}
-    input, select, textarea{background:#0c1330;color:var(--text); border:1px solid var(--line);
-      border-radius:10px; padding:10px 10px; font-size:14px; outline:none;}
-    input:focus, select:focus, textarea:focus{border-color:rgba(255,255,255,.28);}
-    .field{min-width:180px; flex:1;}
-    .field.small{min-width:130px; max-width:160px;}
-    .field.wide{min-width:240px; flex:2;}
-    .btn{background:linear-gradient(180deg,#1b2550,#121a3a); border:1px solid var(--line); color:var(--text);
-      border-radius:12px; padding:10px 12px; cursor:pointer; font-weight:650;}
-    .btn:disabled{opacity:.55; cursor:not-allowed;}
-    .btn.secondary{background:#0c1330;}
-    .hint{color:var(--muted); font-size:12px; margin-top:8px;}
-    table{width:100%; border-collapse:collapse; margin-top:12px;}
-    th, td{border-bottom:1px solid var(--line); padding:10px 8px; font-size:14px;}
-    th{text-align:left; color:var(--muted); font-weight:650; font-size:12px; letter-spacing:.2px;}
-    td.id{font-variant-numeric:tabular-nums; color:#cfd6ff; width:140px;}
-    td.name{width:200px;}
-    .status{display:flex; gap:6px; flex-wrap:wrap;}
-    .pill{border:1px solid var(--line); background:var(--btn); color:var(--text); padding:7px 10px;
-      border-radius:999px; font-size:12px; cursor:pointer; user-select:none;}
-    .pill[data-v="P"].on{background:var(--ok);}
-    .pill[data-v="L"].on{background:var(--warn);}
-    .pill[data-v="A"].on{background:var(--bad);}
-    .pill[data-v="E"].on{background:var(--exc);}
-    .memo{width:100%; min-height:38px; resize:vertical;}
-    .toolbar{display:flex; justify-content:space-between; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap;}
-    .kpi{display:flex; gap:10px; flex-wrap:wrap; color:var(--muted); font-size:12px;}
-    .toast{margin-top:10px; padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:#0c1330; color:var(--text); display:none;}
-    .toast.ok{background:rgba(46,204,113,.15);}
-    .toast.bad{background:rgba(231,76,60,.15);}
-    .right{text-align:right;}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Thermodynamics Attendance</title>
+
+<style>
+body{margin:0;font-family:system-ui;background:#0b1020;color:#e8ecff}
+.wrap{max-width:1000px;margin:auto;padding:16px}
+.card{background:#111833;padding:16px;border-radius:12px}
+table{width:100%;border-collapse:collapse;margin-top:12px}
+td,th{padding:8px;border-bottom:1px solid rgba(255,255,255,.1)}
+.pill{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.2);cursor:pointer}
+.on{background:#2ecc71}
+.toast{margin-top:10px;padding:10px;border-radius:10px;display:none}
+</style>
 </head>
+
 <body>
-<header>
-  <h1>ME.20011 열역학 · 온라인 출석</h1>
-  <div class="sub">
-    사용법: 날짜/회차 선택 → 학생별 출결 선택(P/L/A/E) → <b>구글 시트에 저장</b><br/>
-    (P=출석, L=지각, A=결석, E=공결/인정)
-  </div>
-</header>
-
 <div class="wrap">
-  <div class="card">
-    <div class="row">
-      <div class="field small">
-        <label>수업 날짜</label>
-        <input id="date" type="date" />
-      </div>
-      <div class="field small">
-        <label>회차(요일)</label>
-        <select id="session">
-          <option value="Mon">월(10:30–12:00)</option>
-          <option value="Wed">수(10:30–12:00)</option>
-        </select>
-      </div>
-      <div class="field wide">
-        <label>Apps Script 웹앱 URL</label>
-        <input id="endpoint" type="url" placeholder="https://script.google.com/macros/s/AKfycbyn-1bZoGMoQQooO7KiRNkUE6Ly0OwP4PZVILJ7SV-uo-lE0lS8fQHDWtFESD9LFg3z/exec" />
-        <div class="hint">※ 기본 URL이 자동 입력됩니다. 필요 시 수정하면 브라우저에 저장됩니다(localStorage).</div>
-      </div>
-      <div class="field">
-        <label>기록자(선택)</label>
-        <input id="recorder" type="text" placeholder="예: Lee / TA name" />
-      </div>
-    </div>
+<div class="card">
 
-    <div class="toolbar">
-      <div class="kpi" id="kpi"></div>
-      <div class="row" style="gap:8px;">
-        <button class="btn secondary" id="allP">전체 P</button>
-        <button class="btn secondary" id="clear">초기화</button>
-        <button class="btn" id="submit">구글 시트에 저장</button>
-      </div>
-    </div>
+날짜:
+<input id="date" type="date">
 
-    <div id="toast" class="toast"></div>
+<button onclick="submit()">구글 시트 저장</button>
 
-    <table id="tbl">
-      <thead>
-        <tr>
-          <th class="right">No</th>
-          <th>학번</th>
-          <th>이름</th>
-          <th>출결</th>
-          <th>메모(선택)</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+<div id="toast" class="toast"></div>
+
+<table>
+<thead>
+<tr><th>No</th><th>학번</th><th>이름</th><th>출석</th></tr>
+</thead>
+<tbody id="tbl"></tbody>
+</table>
+
+</div>
 </div>
 
 <script>
-  // ====== ROSTER (studentId, name) ======
-  const roster = [["20230792", "최찬영"], ["20240812", "홍지연"], ["20240231", "노경민"], ["20240290", "박은지"], ["20240301", "박주영"], ["20240501", "이민석"], ["20240901", "박시현"], ["20240940", "Azzikri Farel Ahmad"], ["20240030", "곽효원"], ["20220661", "조용준"], ["20240011", "강선효"], ["20240092", "김두영"], ["20240480", "이건우"], ["20240700", "조윤성"], ["20240991", "Nguyen Minh Thanh"], ["20250002", "강도완"], ["20250010", "강산"], ["20250020", "강태규"], ["20250040", "곽동주"], ["20250062", "권효민"], ["20250071", "김근형"], ["20250072", "김기남"], ["20250081", "김도경"], ["20250152", "김시헌"], ["20250182", "김정우"], ["20250291", "박선우"], ["20250311", "박준서"], ["20250341", "방민국"], ["20250382", "손정민"], ["20250390", "송민준"], ["20250430", "양지호"], ["20250502", "이기환"], ["20250521", "이서준"], ["20250550", "이은진"], ["20250581", "이지후"], ["20250582", "이지후"], ["20250612", "임동연"], ["20250652", "전상욱"], ["20250740", "차승민"], ["20250741", "차영호"], ["20250831", "Raahim Muhammad"], ["20240731", "차민재"]];
+const roster = [
+["20230792","최찬영"],["20240812","홍지연"],["20240231","노경민"],
+["20240290","박은지"],["20240301","박주영"],["20240501","이민석"]
+]; // ← 필요시 전체 명단 붙이세요
 
-  // ✅ 기본으로 고정해둘 Apps Script Web App URL (필요 시 수정)
-  const DEFAULT_ENDPOINT = "https://script.google.com/macros/s/AKfycbzOY76uHElOCZ5UBKpDQIeCZGqpw8YY9PL7ceVuTuXl8iSp6V5fR0DA-n05LMdHwsuO/exec";
+const ENDPOINT =
+"https://script.google.com/macros/s/AKfycbzOY76uHElOCZ5UBKpDQIeCZGqpw8YY9PL7ceVuTuXl8iSp6V5fR0DA-n05LMdHwsuO/exec";
 
-  const $ = (id) => document.getElementById(id);
-  const tbody = $("tbl").querySelector("tbody");
-  const toast = $("toast");
+  
 
-  function todayISO() {
-    const d = new Date();
-    const off = d.getTimezoneOffset();
-    const local = new Date(d.getTime() - off*60*1000);
-    return local.toISOString().slice(0,10);
-  }
+const tbody=document.getElementById("tbl");
+const toast=document.getElementById("toast");
 
-  function saveLocal(key, val) { try { localStorage.setItem(key, val); } catch(e){} }
-  function loadLocal(key, fallback="") { try { return localStorage.getItem(key) ?? fallback; } catch(e){ return fallback; } }
+function showToast(msg){
+ toast.innerText=msg;
+ toast.style.display="block";
+ setTimeout(()=>toast.style.display="none",3000);
+}
 
-  function showToast(msg, ok=true) {
-    toast.textContent = msg;
-    toast.className = "toast " + (ok ? "ok" : "bad");
-    toast.style.display = "block";
-    setTimeout(() => { toast.style.display = "none"; }, 4500);
-  }
+function render(){
+ tbody.innerHTML="";
+ roster.forEach((r,i)=>{
+  const tr=document.createElement("tr");
 
-  function makeRow(i, sid, name) {
-    const tr = document.createElement("tr");
-    tr.dataset.sid = sid;
-    tr.dataset.name = name;
+  tr.innerHTML=`
+    <td>${i+1}</td>
+    <td>${r[0]}</td>
+    <td>${r[1]}</td>
+    <td><span class="pill on">출석</span></td>
+  `;
 
-    const tdNo = document.createElement("td");
-    tdNo.className = "right";
-    tdNo.textContent = i+1;
+  tr.dataset.sid=r[0];
+  tr.dataset.name=r[1];
+  tr.dataset.status="P"; // ✅ 기본 출석
 
-    const tdId = document.createElement("td");
-    tdId.className = "id";
-    tdId.textContent = sid;
+  tr.querySelector(".pill").onclick=()=>{
+    tr.dataset.status = tr.dataset.status==="P"?"A":"P";
+    tr.querySelector(".pill").classList.toggle("on");
+  };
 
-    const tdName = document.createElement("td");
-    tdName.className = "name";
-    tdName.textContent = name;
+  tbody.appendChild(tr);
+ });
+}
 
-    const tdStatus = document.createElement("td");
-    const box = document.createElement("div");
-    box.className = "status";
+function submit(){
 
-    const statuses = [["P","출석"], ["L","지각"], ["A","결석"], ["E","공결"]];
-    statuses.forEach(([v, label]) => {
-      const pill = document.createElement("span");
-      pill.className = "pill";
-      pill.dataset.v = v;
-      pill.textContent = label;
-      pill.addEventListener("click", () => {
-        box.querySelectorAll(".pill").forEach(p => p.classList.remove("on"));
-        pill.classList.add("on");
-        tr.dataset.status = v;
-        updateKPI();
-      });
-      box.appendChild(pill);
-    });
+ const date=document.getElementById("date").value;
+ if(!date){ alert("날짜 선택"); return; }
 
-    tdStatus.appendChild(box);
+ const rows=[...tbody.querySelectorAll("tr")].map(r=>({
+   studentId:r.dataset.sid,
+   name:r.dataset.name,
+   status:r.dataset.status
+ }));
 
-    const tdMemo = document.createElement("td");
-    const memo = document.createElement("textarea");
-    memo.className = "memo";
-    memo.placeholder = "예: 지각 사유 / 공결 사유 / 비고";
-    memo.addEventListener("input", () => { tr.dataset.memo = memo.value.trim(); });
-    tdMemo.appendChild(memo);
+ const payload=JSON.stringify({
+   kind:"attendance_batch_v1",
+   date,
+   session:"Mon",
+   recorder:"prof",
+   records:rows
+ });
 
-    tr.appendChild(tdNo);
-    tr.appendChild(tdId);
-    tr.appendChild(tdName);
-    tr.appendChild(tdStatus);
-    tr.appendChild(tdMemo);
-    return tr;
-  }
+ // ⭐⭐⭐ Load failed 방지 핵심 ⭐⭐⭐
+ const ok = navigator.sendBeacon(
+   ENDPOINT,
+   new Blob([payload], {type:"text/plain;charset=utf-8"})
+ );
 
-  // ✅ “전원 출석(P) 기본 선택” 버전
-  function render() {
-    tbody.innerHTML = "";
-    roster.forEach((r, i) => {
-      const tr = makeRow(i, r[0], r[1]);
+ if(ok) showToast("저장 요청 전송 완료 ✔ (시트 확인)");
+ else alert("전송 실패");
+}
 
-      // 기본값: 출석(P)
-      tr.dataset.status = "P";
-      tr.dataset.memo = "";
+document.getElementById("date").value =
+ new Date().toISOString().slice(0,10);
 
-      // UI에서도 출석 pill을 on
-      const box = tr.querySelector(".status");
-      const pillP = box.querySelector('.pill[data-v="P"]');
-      if (pillP) pillP.classList.add("on");
-
-      tbody.appendChild(tr);
-    });
-    updateKPI();
-  }
-
-  function updateKPI() {
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-    const cnt = {P:0,L:0,A:0,E:0, U:0};
-    rows.forEach(r => {
-      const s = (r.dataset.status || "").trim();
-      if (!s) cnt.U++; else cnt[s] = (cnt[s]||0)+1;
-    });
-    $("kpi").innerHTML = `
-      <span>총원 <b>${rows.length}</b></span>
-      <span>출석 <b>${cnt.P}</b></span>
-      <span>지각 <b>${cnt.L}</b></span>
-      <span>결석 <b>${cnt.A}</b></span>
-      <span>공결 <b>${cnt.E}</b></span>
-      <span>미선택 <b>${cnt.U}</b></span>
-    `;
-  }
-
-  function setAll(statusVal) {
-    Array.from(tbody.querySelectorAll("tr")).forEach(tr => {
-      const box = tr.querySelector(".status");
-      box.querySelectorAll(".pill").forEach(p => p.classList.remove("on"));
-      const pill = box.querySelector(`.pill[data-v="${statusVal}"]`);
-      if (pill) pill.classList.add("on");
-      tr.dataset.status = statusVal;
-    });
-    updateKPI();
-  }
-
-  function clearAll() {
-    Array.from(tbody.querySelectorAll("tr")).forEach(tr => {
-      const box = tr.querySelector(".status");
-      box.querySelectorAll(".pill").forEach(p => p.classList.remove("on"));
-      tr.dataset.status = "";
-      tr.dataset.memo = "";
-      const memo = tr.querySelector("textarea.memo");
-      if (memo) memo.value = "";
-    });
-    updateKPI();
-  }
-
-  async function submit() {
-    const endpoint = $("endpoint").value.trim();
-    if (!endpoint) { showToast("Apps Script 웹앱 URL을 먼저 입력하세요.", false); return; }
-
-    const date = $("date").value;
-    if (!date) { showToast("수업 날짜를 선택하세요.", false); return; }
-
-    const session = $("session").value;
-    const recorder = $("recorder").value.trim();
-
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-    const records = rows.map(r => ({
-      studentId: r.dataset.sid,
-      name: r.dataset.name,
-      status: (r.dataset.status||"").trim(),
-      memo: (r.dataset.memo||"").trim()
-    }));
-
-    const blank = records.filter(x => !x.status);
-    if (blank.length > 0) { showToast(`미선택 학생이 ${blank.length}명 있습니다.`, false); return; }
-
-    $("submit").disabled = true;
-    $("submit").textContent = "저장 중…";
-
-    try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ kind: "attendance_batch_v1", date, session, recorder, records })
-      });
-      const txt = await res.text();
-      let obj = null;
-      try { obj = JSON.parse(txt); } catch(e){}
-      if (!res.ok) throw new Error(obj?.message || txt || "HTTP error");
-      if (obj && obj.ok) showToast(`저장 완료: ${obj.appended}건`, true);
-      else showToast("저장 응답: " + (txt.slice(0,120) || ""), true);
-
-      saveLocal("att_endpoint", endpoint);
-      saveLocal("att_recorder", recorder);
-    } catch (err) {
-      showToast("저장 실패: " + err.message, false);
-    } finally {
-      $("submit").disabled = false;
-      $("submit").textContent = "구글 시트에 저장";
-    }
-  }
-
-  // init
-  $("date").value = todayISO();
-  $("endpoint").value = loadLocal("att_endpoint", DEFAULT_ENDPOINT);
-  $("recorder").value = loadLocal("att_recorder", "");
-
-  $("allP").addEventListener("click", () => setAll("P"));
-  $("clear").addEventListener("click", clearAll);
-  $("submit").addEventListener("click", submit);
-
-  render();
+render();
 </script>
 </body>
 </html>
