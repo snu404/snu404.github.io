@@ -206,16 +206,24 @@
     return tr;
   }
 
-  function render() {
-    tbody.innerHTML = "";
-    roster.forEach((r, i) => {
-      const tr = makeRow(i, r[0], r[1]);
-      tr.dataset.status = "";
-      tr.dataset.memo = "";
-      tbody.appendChild(tr);
-    });
-    updateKPI();
-  }
+function render() {
+  tbody.innerHTML = "";
+  roster.forEach((r, i) => {
+    const tr = makeRow(i, r[0], r[1]);
+
+    // ✅ 기본값: 출석(P)로 미리 선택
+    tr.dataset.status = "P";
+    tr.dataset.memo = "";
+
+    // ✅ UI에서도 "출석" pill을 켜기
+    const box = tr.querySelector(".status");
+    const pillP = box.querySelector('.pill[data-v="P"]');
+    if (pillP) pillP.classList.add("on");
+
+    tbody.appendChild(tr);
+  });
+  updateKPI();
+}
 
   function updateKPI() {
     const rows = Array.from(tbody.querySelectorAll("tr"));
