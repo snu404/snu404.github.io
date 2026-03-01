@@ -324,9 +324,7 @@ function render() {
   $("date").value = todayISO();
 
   const DEFAULT_ENDPOINT =
-  "https://script.google.com/macros/s/AKfycbzOY76uHElOCZ5UBKpDQIeCZGqpw8YY9PL7ceVuTuXl8iSp6V5fR0DA-n05LMdHwsuO/exec";
-
-  $("endpoint").value = loadLocal("att_endpoint", DEFAULT_ENDPOINT);
+  $("endpoint").value = loadLocal("att_endpoint", "");
   $("recorder").value = loadLocal("att_recorder", "");
 
   $("allP").addEventListener("click", () => setAll("P"));
