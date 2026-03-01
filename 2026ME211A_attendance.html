@@ -76,11 +76,11 @@
           <option value="Wed">수(10:30–12:00)</option>
         </select>
       </div>
-      <div class="field wide">
+ <!--     <div class="field wide">
         <label>Apps Script 웹앱 URL (배포 후 붙여넣기)</label>
         <input id="endpoint" type="url" placeholder="https://script.google.com/macros/s/AKfycbzOY76uHElOCZ5UBKpDQIeCZGqpw8YY9PL7ceVuTuXl8iSp6V5fR0DA-n05LMdHwsuO/exec" />
         <div class="hint">※ 최초 1회만 입력하면 브라우저에 저장됩니다(localStorage).</div>
-      </div>
+      </div> -->
       <div class="field">
         <label>기록자(선택)</label>
         <input id="recorder" type="text" placeholder="예: Lee / TA name" />
@@ -267,8 +267,8 @@ function render() {
   }
 
   async function submit() {
-    const endpoint = $("endpoint").value.trim();
-    if (!endpoint) { showToast("Apps Script 웹앱 URL을 먼저 입력하세요.", false); return; }
+<!--    const endpoint = $("endpoint").value.trim();
+    if (!endpoint) { showToast("Apps Script 웹앱 URL을 먼저 입력하세요.", false); return; } -->
 
     const date = $("date").value;
     if (!date) { showToast("수업 날짜를 선택하세요.", false); return; }
