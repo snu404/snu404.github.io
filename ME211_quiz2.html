@@ -767,6 +767,7 @@ async function gradeAndSave() {
   saveDB(db);
 
   const payload = {
+    quizName: "Lecture 2 Quiz",   // ✅ 이게 없으면 탭이 새로 안 만들어짐
     time: attempt.time,
     studentId,
     score,
