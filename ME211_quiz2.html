@@ -99,51 +99,47 @@
 ========================================================= */
 const BASE_URL = "https://snu404.github.io/ME211_quiz2.html";
 
-/* ✅ 여기에 Apps Script Web App URL을 넣으세요 */
+/* ✅ Apps Script Web App URL */
 const GOOGLE_SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwi2t427afEnzRHPZ1CD8dHSe16QP9Vk0tJPtOSd_KrKv6ff4Ekv7VyNrN8pUiqt5vm7g/exec";
 
-<script>
 /* -------------------------
    Quiz data (10 multiple-choice)
-   - Includes the 4 given questions + 6 related questions
 -------------------------- */
 const quiz = [
-  { q: "Which law of thermodynamics is the basis for temperature measurement? (a) 0th law (b) 1st law (c) 2nd law",
+  { q: "Which law of thermodynamics is the basis for temperature measurement?",
     options: ["0th law","1st law","2nd law","None of the above"],
     answer: 0,
     exp: "The Zeroth Law establishes thermal equilibrium and enables the definition and measurement of temperature."
   },
-  { q: "Choose the right order of foundation of three thermodynamics laws (a) 0th – 1st – 2nd (b) 1st – 2nd – 0th (c) 1st – 0th – 2nd (d) 2nd – 1st – 0th",
+  { q: "Choose the right order of foundation of three thermodynamics laws",
     options: ["0th – 1st – 2nd","1st – 2nd – 0th","1st – 0th – 2nd","2nd – 1st – 0th"],
     answer: 0,
-    exp: "Conceptually: Zeroth Law (temperature/thermal equilibrium) → First Law (energy conservation) → Second Law (direction/entropy)."
+    exp: "Conceptually: Zeroth Law → First Law → Second Law."
   },
   { q: "A series of states through which a system passes during a process is __________ .",
     options: ["A cycle","A path","A property","An equation of state"],
     answer: 1,
     exp: "The sequence of states followed during a process is called the process path."
   },
-  { q: "How many independent intensive properties are required to describe the equilibrium state of a simple compressible system? (a) 0 (b) 1 (c) 2 (d) 3",
+  { q: "How many independent intensive properties are required to describe the equilibrium state of a simple compressible system?",
     options: ["0","1","2","3"],
     answer: 2,
     exp: "For a simple compressible system, two independent intensive properties fix the equilibrium state (e.g., T and P)."
   },
-
-  // ---- 6 additional related questions ----
   { q: "Which pair of properties can serve as two independent intensive properties for a simple compressible system?",
     options: ["Mass and volume","Pressure and temperature","Internal energy and total energy","Heat and work"],
     answer: 1,
-    exp: "For simple compressible systems, (P, T) is a common valid pair of independent intensive properties."
+    exp: "For simple compressible systems, (P, T) is a common valid pair."
   },
   { q: "A thermodynamic property is best described as:",
     options: ["Depends on the path taken","Depends only on the state","Always equal to heat transfer","Always equal to work transfer"],
     answer: 1,
-    exp: "A property is a state function; it depends only on the state, not on how the state was reached."
+    exp: "A property is a state function; it depends only on the state."
   },
   { q: "Which statement is TRUE about heat and work?",
     options: ["Both are properties","Heat is a property, work is not","Neither heat nor work is a property","Work is a property, heat is not"],
     answer: 2,
-    exp: "Heat and work are modes of energy transfer (path functions), not properties of the system."
+    exp: "Heat and work are modes of energy transfer (path functions), not properties."
   },
   { q: "For an isolated system undergoing a spontaneous process, the total entropy:",
     options: ["Must decrease","Must increase or remain constant","Must remain zero","Can take any value without restriction"],
@@ -161,7 +157,6 @@ const quiz = [
     exp: "Pressure does not depend on system size, so it is intensive."
   }
 ];
-
 
 /* -------------------------
    Teacher mode detection
@@ -214,18 +209,15 @@ async function sendAttemptToGoogleSheet(payload) {
   if (!GOOGLE_SHEET_WEBAPP_URL || GOOGLE_SHEET_WEBAPP_URL.includes("PUT_YOUR_")) {
     console.warn("Google Sheet WebApp URL is not set. Skipping upload.");
     return { ok: false, skipped: true };
-    // You could also alert here, but that may annoy students.
   }
 
   try {
     const res = await fetch(GOOGLE_SHEET_WEBAPP_URL, {
       method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" }, // Apps Script friendly
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(payload),
     });
 
-    // Apps Script usually returns JSON; if CORS blocks reading, this may throw.
-    // Still, the row often gets appended. We'll be robust:
     let data = null;
     try { data = await res.json(); } catch { data = { ok: res.ok }; }
     return data;
@@ -239,7 +231,7 @@ async function sendAttemptToGoogleSheet(payload) {
    Aggregate statistics across all students & attempts
 -------------------------- */
 function computeAggregateStats(db) {
-  const stats = quiz.map((_, qi) => ({
+  const stats = quiz.map(() => ({
     totalAttempts: 0,
     answered: 0,
     correct: 0,
@@ -342,7 +334,7 @@ function renderQRPanelOnly() {
   c.innerHTML = `
     <h3 style="margin:0 0 8px; font-size:15px;">Open on Smartphone (QR)</h3>
     <div class="qrWrap">
-      <img id="qrImg" alt="QR"
+      <img class="qrImg" alt="QR"
            style="width:220px;height:220px;border-radius:14px;border:1px solid #e5e7eb;background:#fff;" />
       <div style="min-width: 240px;">
         <div style="height:10px;"></div>
@@ -350,7 +342,7 @@ function renderQRPanelOnly() {
           <button class="ghost smallBtn" id="btnCopyLink">Copy Link</button>
           <button class="ghost smallBtn" id="btnRefreshQR">Refresh QR</button>
         </div>
-        <div id="linkText" class="mini muted mono" style="margin-top:8px; word-break: break-all;"></div>
+        <div class="linkText mini muted mono" style="margin-top:8px; word-break: break-all;"></div>
       </div>
     </div>
   `;
@@ -360,8 +352,7 @@ function renderQRPanelOnly() {
 function wireQRPanelOnly() {
   document.getElementById("btnCopyLink")?.addEventListener("click", copyLink);
   document.getElementById("btnRefreshQR")?.addEventListener("click", refreshQR);
-  const linkText = document.getElementById("linkText");
-  if (linkText) linkText.textContent = BASE_URL;
+  document.querySelectorAll(".linkText").forEach(el => el.textContent = BASE_URL);
 }
 
 function renderTopPanel() {
@@ -387,16 +378,16 @@ function renderTopPanel() {
       <div class="card" style="box-shadow:none; border:1px solid #eef2f7; margin:0;">
         <h3 style="margin:0 0 8px; font-size:15px;">QR (open this quiz)</h3>
         <div class="qrWrap">
-          <img id="qrImg" alt="QR"
+          <img class="qrImg" alt="QR"
                style="width:220px;height:220px;border-radius:14px;border:1px solid #e5e7eb;background:#fff;" />
           <div style="min-width: 240px;">
             <div class="mini">Scan to open this quiz on your smartphone.</div>
             <div style="height:10px;"></div>
             <div class="btnrow" style="gap:8px;">
-              <button class="ghost smallBtn" id="btnCopyLink">Copy Link</button>
-              <button class="ghost smallBtn" id="btnRefreshQR">Refresh QR</button>
+              <button class="ghost smallBtn" id="btnCopyLink2">Copy Link</button>
+              <button class="ghost smallBtn" id="btnRefreshQR2">Refresh QR</button>
             </div>
-            <div id="linkText" class="mini muted mono" style="margin-top:8px; word-break: break-all;"></div>
+            <div class="linkText mini muted mono" style="margin-top:8px; word-break: break-all;"></div>
           </div>
         </div>
       </div>
@@ -424,7 +415,7 @@ function renderTopPanel() {
       <div class="card" style="box-shadow:none; border:1px solid #eef2f7; margin:12px 0 0;">
         <h3 style="margin:0 0 8px; font-size:15px;">Teacher Dashboard (this device)</h3>
         <div class="mini muted">
-          Aggregates <b>all Student IDs saved on this device</b>. If students use different phones, their data lives on their phones.
+          Aggregates <b>all Student IDs saved on this device</b>.
         </div>
 
         <div style="height:10px;"></div>
@@ -527,16 +518,15 @@ function renderBottomControls() {
    Wiring
 -------------------------- */
 function wireTopPanel() {
-  document.getElementById("btnCopyLink")?.addEventListener("click", copyLink);
-  document.getElementById("btnRefreshQR")?.addEventListener("click", refreshQR);
+  document.getElementById("btnCopyLink2")?.addEventListener("click", copyLink);
+  document.getElementById("btnRefreshQR2")?.addEventListener("click", refreshQR);
   document.getElementById("btnChangeId")?.addEventListener("click", () => {
     const val = prompt("Enter new Student ID:", studentId || "");
     if (!val) return;
     setStudentId(val.trim());
   });
 
-  const linkText = document.getElementById("linkText");
-  if (linkText) linkText.textContent = BASE_URL;
+  document.querySelectorAll(".linkText").forEach(el => el.textContent = BASE_URL);
 
   if (TEACHER_MODE) {
     const toggle = document.getElementById("toggleShowCorrect");
@@ -571,18 +561,16 @@ function copyLink() {
 
 function refreshQR() {
   const url = BASE_URL;
-  const imgs = document.querySelectorAll("#qrImg");
+  const imgs = document.querySelectorAll(".qrImg");
   if (!imgs.length) return;
 
   const qrSrc = "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" + encodeURIComponent(url);
   imgs.forEach(img => { img.src = qrSrc; });
-
-  const linkTexts = document.querySelectorAll("#linkText");
-  linkTexts.forEach(el => { el.textContent = url; });
+  document.querySelectorAll(".linkText").forEach(el => { el.textContent = url; });
 }
 
 /* -------------------------
-   Student-specific panels refresh
+   Panels refresh
 -------------------------- */
 function refreshStudentPanels() {
   db = loadDB();
@@ -646,12 +634,6 @@ function refreshWrongNotes() {
     `;
     list.appendChild(div);
   });
-
-  const more = document.createElement("div");
-  more.className = "mini muted";
-  more.style.marginTop = "8px";
-  more.textContent = wrongNotes.length > 10 ? `Showing latest 10 of ${wrongNotes.length} wrong-note entries.` : "";
-  list.appendChild(more);
 }
 
 function refreshStats() {
@@ -659,7 +641,6 @@ function refreshStats() {
   if (!wrap) return;
 
   const stats = computeAggregateStats(db);
-
   const rows = stats.map((st, qi) => {
     const total = st.totalAttempts || 0;
     const correctRate = total ? (100 * st.correct / total) : 0;
@@ -694,9 +675,6 @@ function refreshStats() {
         <tbody>${rows || ""}</tbody>
       </table>
     </div>
-    <div class="mini muted" style="margin-top:8px;">
-      “Total attempts” counts all saved attempts across all Student IDs on <b>this device</b>.
-    </div>
   `;
 }
 
@@ -717,16 +695,16 @@ function hideCorrectHints() {
 }
 
 /* -------------------------
-   Grade + save + ✅ upload to Google Sheet
+   Grade + save + upload
 -------------------------- */
 async function gradeAndSave() {
   db = loadDB();
   const s = ensureStudent(db, studentId);
 
-  const answersNumeric = [];      // 0..3 or null
-  const answersLetter = [];       // "A"/"B"/"C"/"D" or ""
-  const correctAnswersLetter = []; // "A"/"B"/"C"/"D"
-  const perQuestionScore = [];    // 1/0
+  const answersNumeric = [];
+  const answersLetter = [];
+  const correctAnswersLetter = [];
+  const perQuestionScore = [];
   const wrongItems = [];
   let score = 0;
   let unanswered = 0;
@@ -788,18 +766,17 @@ async function gradeAndSave() {
   db.currentStudentId = studentId;
   saveDB(db);
 
-  // ✅ Upload to Google Sheet (non-blocking UX)
   const payload = {
     time: attempt.time,
     studentId,
     score,
     total: quiz.length,
     unanswered,
-    answers: answersLetter,              // A/B/C/D or ""
-    correctAnswers: correctAnswersLetter, // A/B/C/D
-    perQuestionScore,                    // 1/0
+    answers: answersLetter,
+    correctAnswers: correctAnswersLetter,
+    perQuestionScore,
   };
-  sendAttemptToGoogleSheet(payload); // intentionally not awaited
+  sendAttemptToGoogleSheet(payload); // not awaited
 
   alert(`Score: ${score} / ${quiz.length} (Unanswered: ${unanswered})\nSaved under Student ID: ${studentId}`);
   refreshStudentPanels();
@@ -874,7 +851,3 @@ renderAll();
 </script>
 </body>
 </html>
-
-
-  
- 
