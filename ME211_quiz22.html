@@ -1,0 +1,1012 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ME211 Lecture 2 Quiz</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    body { margin: 0; background: #f6f7fb; color: #111; }
+    header { padding: 16px 14px; background: #111; color: #fff; }
+    header h1 { margin: 0; font-size: 18px; font-weight: 800; }
+    header p { margin: 6px 0 0; font-size: 13px; opacity: .9; line-height: 1.35; }
+    main { max-width: 980px; margin: 0 auto; padding: 12px; }
+
+    .card {
+      background: #fff; border-radius: 14px; padding: 14px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.06);
+      margin: 12px 0;
+    }
+
+    .row { display:flex; gap:12px; flex-wrap: wrap; }
+    .grow { flex: 1 1 300px; }
+    .mini { font-size: 12px; opacity: .85; line-height: 1.35; }
+    .muted { opacity: .78; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    .kpi { display:flex; gap:10px; flex-wrap: wrap; align-items: center; }
+    .pill {
+      display:inline-flex; gap:8px; align-items:center;
+      padding: 8px 10px; border-radius: 999px;
+      background:#f3f4f6; border:1px solid #e5e7eb;
+      font-size: 13px;
+    }
+    .pill b { font-size: 14px; }
+
+    .q-head { display:flex; gap:10px; align-items:flex-start; }
+    .badge {
+      min-width: 34px; height: 34px; border-radius: 10px;
+      display:flex; align-items:center; justify-content:center;
+      background:#eef2ff; color:#1e3a8a; font-weight: 800;
+    }
+    .q-text { font-size: 15px; line-height: 1.35; margin: 0; }
+    .options { margin-top: 10px; display: grid; gap: 8px; }
+    label.opt {
+      display:flex; gap:10px; align-items:flex-start;
+      padding: 10px 10px; border-radius: 12px; border: 1px solid #e5e7eb;
+      background: #fafafa;
+    }
+    input[type="radio"] { margin-top: 2px; transform: scale(1.15); }
+
+    .controls { position: sticky; bottom: 0; padding: 10px 0; background: linear-gradient(transparent, #f6f7fb 35%); }
+    .btnrow { display:flex; gap:10px; flex-wrap: wrap; }
+    button {
+      border: 0; border-radius: 14px; padding: 12px 12px;
+      font-weight: 800; font-size: 15px;
+      cursor: pointer;
+    }
+    .primary { background:#111; color:#fff; flex: 1 1 180px; }
+    .ghost { background:#fff; color:#111; border: 1px solid #e5e7eb; flex: 1 1 180px; }
+    .danger { background:#fff; color:#991b1b; border: 1px solid #fecaca; flex: 1 1 180px; }
+    .smallBtn { padding: 10px 12px; font-size: 13px; border-radius: 12px; flex: 0 0 auto; }
+
+    .result { margin-top: 10px; font-size: 14px; }
+    .ok { color: #065f46; font-weight: 800; }
+    .bad { color: #991b1b; font-weight: 800; }
+    .explain { margin-top: 8px; padding: 10px; border-radius: 12px; background:#f3f4f6; font-size: 13px; line-height: 1.35; display:none; }
+
+    .qrWrap { display:flex; gap:14px; align-items: center; flex-wrap: wrap; }
+    #qrCanvas { width: 180px; height: 180px; border-radius: 14px; border: 1px solid #e5e7eb; background: #fff; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border-bottom: 1px solid #eef2f7; padding: 10px 8px; text-align: left; vertical-align: top; }
+    th { font-size: 12px; opacity: .75; }
+    details summary { cursor: pointer; font-weight: 800; }
+
+    .noteItem { padding: 10px; border: 1px solid #e5e7eb; border-radius: 12px; background: #fafafa; margin-top: 8px; }
+
+    .grid2 { display:grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 900px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+
+    .inputRow { display:flex; gap:10px; flex-wrap: wrap; align-items: center; }
+    input[type="text"]{
+      padding: 10px 12px; border-radius: 12px; border: 1px solid #e5e7eb;
+      font-size: 14px; min-width: 220px;
+    }
+    .toggleRow { display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
+    .toggleRow input { transform: scale(1.15); }
+  </style>
+</head>
+<body>
+<header>
+  <h1>ME211 Lecture 2 Quiz</h1>
+/*  <p>
+    Student ID-based saving + Teacher Mode + per-question statistics + QR.<br/>
+    Teacher Mode: add <span class="mono">?teacher=1</span> (or <span class="mono">#teacher</span>) to the URL.
+  </p> */
+</header>
+
+<main id="app"></main>
+
+<script>
+/* -------------------------
+   Quiz data (10 multiple-choice)
+   - Includes the 4 given questions + 6 related questions
+-------------------------- */
+const quiz = [
+  { q: "Which law of thermodynamics is the basis for temperature measurement? (a) 0th law (b) 1st law (c) 2nd law",
+    options: ["0th law","1st law","2nd law","None of the above"],
+    answer: 0,
+    exp: "The Zeroth Law establishes thermal equilibrium and enables the definition and measurement of temperature."
+  },
+  { q: "Choose the right order of foundation of three thermodynamics laws (a) 0th – 1st – 2nd (b) 1st – 2nd – 0th (c) 1st – 0th – 2nd (d) 2nd – 1st – 0th",
+    options: ["0th – 1st – 2nd","1st – 2nd – 0th","1st – 0th – 2nd","2nd – 1st – 0th"],
+    answer: 0,
+    exp: "Conceptually: Zeroth Law (temperature/thermal equilibrium) → First Law (energy conservation) → Second Law (direction/entropy)."
+  },
+  { q: "A series of states through which a system passes during a process is __________ .",
+    options: ["A cycle","A path","A property","An equation of state"],
+    answer: 1,
+    exp: "The sequence of states followed during a process is called the process path."
+  },
+  { q: "How many independent intensive properties are required to describe the equilibrium state of a simple compressible system? (a) 0 (b) 1 (c) 2 (d) 3",
+    options: ["0","1","2","3"],
+    answer: 2,
+    exp: "For a simple compressible system, two independent intensive properties fix the equilibrium state (e.g., T and P)."
+  },
+
+  // ---- 6 additional related questions ----
+  { q: "Which pair of properties can serve as two independent intensive properties for a simple compressible system?",
+    options: ["Mass and volume","Pressure and temperature","Internal energy and total energy","Heat and work"],
+    answer: 1,
+    exp: "For simple compressible systems, (P, T) is a common valid pair of independent intensive properties."
+  },
+  { q: "A thermodynamic property is best described as:",
+    options: ["Depends on the path taken","Depends only on the state","Always equal to heat transfer","Always equal to work transfer"],
+    answer: 1,
+    exp: "A property is a state function; it depends only on the state, not on how the state was reached."
+  },
+  { q: "Which statement is TRUE about heat and work?",
+    options: ["Both are properties","Heat is a property, work is not","Neither heat nor work is a property","Work is a property, heat is not"],
+    answer: 2,
+    exp: "Heat and work are modes of energy transfer (path functions), not properties of the system."
+  },
+  { q: "For an isolated system undergoing a spontaneous process, the total entropy:",
+    options: ["Must decrease","Must increase or remain constant","Must remain zero","Can take any value without restriction"],
+    answer: 1,
+    exp: "Second law: entropy of an isolated system increases for spontaneous processes (or stays constant if reversible)."
+  },
+  { q: "A process in which the system returns to its initial state is called a:",
+    options: ["Path","Cycle","Property","Phase change"],
+    answer: 1,
+    exp: "A cycle ends at the initial state; net change in state properties over a cycle is zero."
+  },
+  { q: "Which of the following is an intensive property?",
+    options: ["Volume","Mass","Pressure","Total energy"],
+    answer: 2,
+    exp: "Pressure does not depend on system size, so it is intensive."
+  }
+];
+
+/* -------------------------
+   Teacher mode detection
+-------------------------- */
+const TEACHER_MODE = (() => {
+  const qs = new URLSearchParams(location.search);
+  if (qs.get("teacher") === "1") return true;
+  if (String(location.hash || "").toLowerCase().includes("teacher")) return true;
+  return false;
+})();
+let SHOW_CORRECT = false;
+
+/* -------------------------
+   Storage model (ID-based)
+   Single DB object:
+   thermo_mcq_db_v2 = {
+     currentStudentId: "abc",
+     students: {
+        "abc": { attempts: [...], wrongNotes: [...] },
+        "def": ...
+     }
+   }
+-------------------------- */
+const KEY_DB = "thermo_mcq_db_v2";
+
+function loadDB() {
+  try {
+    const raw = localStorage.getItem(KEY_DB);
+    if (!raw) return { currentStudentId: "", students: {} };
+    const db = JSON.parse(raw);
+    if (!db.students) db.students = {};
+    if (typeof db.currentStudentId !== "string") db.currentStudentId = "";
+    return db;
+  } catch {
+    return { currentStudentId: "", students: {} };
+  }
+}
+function saveDB(db) { localStorage.setItem(KEY_DB, JSON.stringify(db)); }
+function ensureStudent(db, id) {
+  if (!db.students[id]) db.students[id] = { attempts: [], wrongNotes: [] };
+  return db.students[id];
+}
+function nowISO(){ return new Date().toISOString(); }
+function formatTime(iso){ try { return new Date(iso).toLocaleString(); } catch { return iso; } }
+function letter(i){ return String.fromCharCode(65 + i); }
+function escapeHTML(s){
+  return String(s)
+    .replaceAll("&","&amp;").replaceAll("<","&lt;")
+    .replaceAll(">","&gt;").replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+/* -------------------------
+   Minimal QR generator (same as before; Version2-M)
+-------------------------- */
+(function(){
+  function QRBitBuffer(){ this.buffer=[]; this.length=0; }
+  QRBitBuffer.prototype = {
+    put: function(num, len){ for(let i=0;i<len;i++) this.putBit(((num >>> (len - i - 1)) & 1) === 1); },
+    putBit: function(bit){
+      const bufIndex = Math.floor(this.length / 8);
+      if(this.buffer.length <= bufIndex) this.buffer.push(0);
+      if(bit) this.buffer[bufIndex] |= (0x80 >>> (this.length % 8));
+      this.length++;
+    }
+  };
+  const EXP_TABLE = new Array(256);
+  const LOG_TABLE = new Array(256);
+  for(let i=0;i<8;i++) EXP_TABLE[i] = 1 << i;
+  for(let i=8;i<256;i++) EXP_TABLE[i] = EXP_TABLE[i-4]^EXP_TABLE[i-5]^EXP_TABLE[i-6]^EXP_TABLE[i-8];
+  for(let i=0;i<255;i++) LOG_TABLE[EXP_TABLE[i]] = i;
+  function glog(n){ if(n<1) throw new Error("glog"); return LOG_TABLE[n]; }
+  function gexp(n){ while(n<0) n += 255; while(n>=256) n -= 255; return EXP_TABLE[n]; }
+  function QRPolynomial(num, shift){
+    let offset=0; while(offset<num.length && num[offset]===0) offset++;
+    this.num = new Array(num.length - offset + shift);
+    for(let i=0;i<num.length-offset;i++) this.num[i]=num[i+offset];
+    for(let i=0;i<shift;i++) this.num[num.length-offset+i]=0;
+  }
+  QRPolynomial.prototype = {
+    get: function(i){ return this.num[i]; },
+    getLength: function(){ return this.num.length; },
+    multiply: function(e){
+      const num = new Array(this.getLength() + e.getLength() - 1).fill(0);
+      for(let i=0;i<this.getLength();i++){
+        for(let j=0;j<e.getLength();j++){
+          num[i+j] ^= gexp(glog(this.get(i)) + glog(e.get(j)));
+        }
+      }
+      return new QRPolynomial(num, 0);
+    },
+    mod: function(e){
+      if(this.getLength() - e.getLength() < 0) return this;
+      const ratio = glog(this.get(0)) - glog(e.get(0));
+      const num = this.num.slice();
+      for(let i=0;i<e.getLength();i++){
+        num[i] ^= gexp(glog(e.get(i)) + ratio);
+      }
+      return new QRPolynomial(num, 0).mod(e);
+    }
+  };
+  function getErrorCorrectPolynomial(ecLength){
+    let a = new QRPolynomial([1], 0);
+    for(let i=0;i<ecLength;i++) a = a.multiply(new QRPolynomial([1, gexp(i)], 0));
+    return a;
+  }
+  const MODULE_COUNT = 25; // version 2
+  const DATA_CODEWORDS = 28;
+  const EC_CODEWORDS = 16;
+
+  function createDataBytes(text){
+    let bytes = [];
+    // UTF-8 robust
+    bytes = Array.from(new TextEncoder().encode(text));
+    const buffer = new QRBitBuffer();
+    buffer.put(0x4, 4);
+    buffer.put(bytes.length, 8);
+    for(const b of bytes) buffer.put(b, 8);
+    const totalBits = DATA_CODEWORDS * 8;
+    if(buffer.length + 4 <= totalBits) buffer.put(0, 4);
+    while(buffer.length % 8 !== 0) buffer.putBit(false);
+    const padBytes = [0xEC, 0x11];
+    let padIndex = 0;
+    while(buffer.length < totalBits) buffer.put(padBytes[padIndex++ % 2], 8);
+    const data = [];
+    for(let i=0;i<DATA_CODEWORDS;i++) data.push(buffer.buffer[i] ?? 0);
+    return data;
+  }
+  function createECBytes(data){
+    const rsPoly = getErrorCorrectPolynomial(EC_CODEWORDS);
+    const rawPoly = new QRPolynomial(data, EC_CODEWORDS);
+    const modPoly = rawPoly.mod(rsPoly);
+    const ec = new Array(EC_CODEWORDS).fill(0);
+    const offset = ec.length - modPoly.getLength();
+    for(let i=0;i<modPoly.getLength();i++) ec[i+offset] = modPoly.get(i);
+    return ec;
+  }
+  function makeMatrix(){
+    const m = new Array(MODULE_COUNT).fill(null).map(()=>new Array(MODULE_COUNT).fill(null));
+    function finder(x,y){
+      for(let dy=-1;dy<=7;dy++){
+        for(let dx=-1;dx<=7;dx++){
+          const xx=x+dx, yy=y+dy;
+          if(xx<0||yy<0||xx>=MODULE_COUNT||yy>=MODULE_COUNT) continue;
+          const on = (0<=dx && dx<=6 && (dy===0||dy===6)) ||
+                     (0<=dy && dy<=6 && (dx===0||dx===6)) ||
+                     (2<=dx && dx<=4 && 2<=dy && dy<=4);
+          m[yy][xx] = on;
+        }
+      }
+    }
+    finder(0,0); finder(MODULE_COUNT-7,0); finder(0,MODULE_COUNT-7);
+    for(let i=8;i<MODULE_COUNT-8;i++){ m[6][i]=(i%2===0); m[i][6]=(i%2===0); }
+    function alignment(cx,cy){
+      for(let dy=-2;dy<=2;dy++){
+        for(let dx=-2;dx<=2;dx++){
+          const xx=cx+dx, yy=cy+dy;
+          m[yy][xx] = (Math.max(Math.abs(dx),Math.abs(dy)) !== 1);
+        }
+      }
+    }
+    alignment(18,18);
+    m[MODULE_COUNT-8][8] = true;
+    return m;
+  }
+  function isReserved(matrix,x,y){ return matrix[y][x] !== null; }
+  function mask0(x,y){ return ((x+y)%2)===0; }
+  function applyFormatInfo(matrix){
+    const fmt = 0x5412; // M + mask0
+    const bit = (i)=>(((fmt>>>i)&1)===1);
+    for(let i=0;i<6;i++) matrix[8][i]=bit(14-i);
+    matrix[8][7]=bit(8); matrix[8][8]=bit(7); matrix[7][8]=bit(6);
+    for(let i=0;i<6;i++) matrix[5-i][8]=bit(5-i);
+    for(let i=0;i<8;i++) matrix[8][MODULE_COUNT-1-i]=bit(14-i);
+    for(let i=0;i<7;i++) matrix[MODULE_COUNT-1-i][8]=bit(6-i);
+    matrix[8][6]=true;
+  }
+  function placeData(matrix, codewords){
+    const bits=[];
+    for(const cw of codewords) for(let i=7;i>=0;i--) bits.push(((cw>>>i)&1)===1);
+    let bitIndex=0; let dirUp=true;
+    for(let x=MODULE_COUNT-1;x>0;x-=2){
+      if(x===6) x--;
+      for(let yi=0;yi<MODULE_COUNT;yi++){
+        const y=dirUp?(MODULE_COUNT-1-yi):yi;
+        for(let dx=0;dx<2;dx++){
+          const xx=x-dx;
+          if(isReserved(matrix,xx,y)) continue;
+          let v=bits[bitIndex++] ?? false;
+          if(mask0(xx,y)) v=!v;
+          matrix[y][xx]=v;
+        }
+      }
+      dirUp=!dirUp;
+    }
+  }
+  function makeQRCodeCanvas(text, canvas){
+    const matrix=makeMatrix();
+    const data=createDataBytes(text);
+    const ec=createECBytes(data);
+    placeData(matrix, data.concat(ec));
+    applyFormatInfo(matrix);
+
+    const ctx=canvas.getContext("2d");
+    const size=canvas.width;
+    const cells=MODULE_COUNT, quiet=4;
+    const scale=Math.floor(size/(cells+quiet*2));
+    const offset=Math.floor((size - scale*(cells+quiet*2))/2);
+
+    ctx.clearRect(0,0,size,size);
+    ctx.fillStyle="#fff"; ctx.fillRect(0,0,size,size);
+    ctx.fillStyle="#000";
+    for(let y=0;y<cells;y++){
+      for(let x=0;x<cells;x++){
+        if(matrix[y][x]){
+          const px=offset+scale*(x+quiet);
+          const py=offset+scale*(y+quiet);
+          ctx.fillRect(px,py,scale,scale);
+        }
+      }
+    }
+  }
+  window.__makeQRCodeCanvas = makeQRCodeCanvas;
+})();
+
+/* -------------------------
+   Aggregate statistics across all students & attempts
+-------------------------- */
+function computeAggregateStats(db) {
+  const stats = quiz.map((_, qi) => ({
+    totalAttempts: 0,   // counts attempts where question is present (always) but we treat unanswered separately
+    answered: 0,
+    correct: 0,
+    wrong: 0,
+    unanswered: 0,
+    choiceCount: [0,0,0,0] // A/B/C/D among answered
+  }));
+
+  const studentIds = Object.keys(db.students || {});
+  for (const sid of studentIds) {
+    const s = db.students[sid];
+    const attempts = (s && s.attempts) ? s.attempts : [];
+    for (const a of attempts) {
+      const answers = a.answers || [];
+      for (let qi=0; qi<quiz.length; qi++) {
+        stats[qi].totalAttempts++;
+        const ans = answers[qi];
+        if (ans === null || ans === undefined) {
+          stats[qi].unanswered++;
+          continue;
+        }
+        stats[qi].answered++;
+        if (ans >=0 && ans < 4) stats[qi].choiceCount[ans]++;
+
+        if (ans === quiz[qi].answer) stats[qi].correct++;
+        else stats[qi].wrong++;
+      }
+    }
+  }
+  return stats;
+}
+
+/* -------------------------
+   Render
+-------------------------- */
+const app = document.getElementById("app");
+let db = loadDB();
+let studentId = (db.currentStudentId || "").trim();
+
+function renderAll() {
+  app.innerHTML = "";
+
+  // Student ID required panel (if missing)
+  if (!studentId) {
+    app.appendChild(renderStudentGate());
+    wireStudentGate();
+    // still render QR + teacher note
+    app.appendChild(renderQRPanelOnly());
+    wireQRPanelOnly();
+    refreshQR();
+    return;
+  }
+
+  // Main panels
+  app.appendChild(renderTopPanel());
+  app.appendChild(renderQuestions());
+  app.appendChild(renderBottomControls());
+
+  wireTopPanel();
+  wireQuestionsControls();
+  refreshStudentPanels();
+  refreshQR();
+}
+
+function renderStudentGate() {
+  const c = document.createElement("section");
+  c.className = "card";
+  c.innerHTML = `
+    <h3 style="margin:0 0 8px; font-size:15px;">Enter Student ID</h3>
+    <div class="mini muted">Your attempts will be saved under this ID on this device.</div>
+    <div style="height:10px;"></div>
+    <div class="inputRow">
+      <input id="studentIdInput" type="text" placeholder="e.g., 20261234 or name" />
+      <button class="primary smallBtn" id="btnSetStudent">Start</button>
+    </div>
+    <div class="mini muted" style="margin-top:10px;">
+      Teacher Mode: open this page with <span class="mono">?teacher=1</span>.
+    </div>
+  `;
+  return c;
+}
+
+function wireStudentGate() {
+  const input = document.getElementById("studentIdInput");
+  const btn = document.getElementById("btnSetStudent");
+  btn?.addEventListener("click", () => {
+    const val = (input.value || "").trim();
+    if (!val) { alert("Please enter a Student ID."); return; }
+    setStudentId(val);
+  });
+  input?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") btn.click();
+  });
+}
+
+function setStudentId(val) {
+  studentId = val;
+  db.currentStudentId = studentId;
+  ensureStudent(db, studentId);
+  saveDB(db);
+  renderAll();
+}
+
+function renderQRPanelOnly() {
+  const c = document.createElement("section");
+  c.className = "card";
+  c.innerHTML = `
+    <h3 style="margin:0 0 8px; font-size:15px;">Open on Phone (QR)</h3>
+    <div class="qrWrap">
+      <canvas id="qrCanvas" width="220" height="220"></canvas>
+      <div style="min-width: 240px;">
+        <div class="mini">
+          QR encodes the <b>current URL</b>. Host this file online (GitHub Pages / lab server) for easy phone access.
+        </div>
+        <div style="height:10px;"></div>
+        <div class="btnrow" style="gap:8px;">
+          <button class="ghost smallBtn" id="btnCopyLink">Copy Link</button>
+          <button class="ghost smallBtn" id="btnRefreshQR">Refresh QR</button>
+        </div>
+        <div id="linkText" class="mini muted mono" style="margin-top:8px; word-break: break-all;"></div>
+      </div>
+    </div>
+  `;
+  return c;
+}
+function wireQRPanelOnly() {
+  document.getElementById("btnCopyLink")?.addEventListener("click", copyLink);
+  document.getElementById("btnRefreshQR")?.addEventListener("click", refreshQR);
+  const linkText = document.getElementById("linkText");
+  if (linkText) linkText.textContent = location.href;
+}
+
+function renderTopPanel() {
+  const c = document.createElement("section");
+  c.className = "card";
+
+  c.innerHTML = `
+    <div class="kpi">
+      <span class="pill">Student ID: <b id="sidText">${escapeHTML(studentId)}</b></span>
+      <button class="ghost smallBtn" id="btnChangeId">Change ID</button>
+      <span class="pill">Teacher Mode: <b>${TEACHER_MODE ? "ON" : "OFF"}</b></span>
+      ${TEACHER_MODE ? `
+        <span class="pill">
+          <label class="toggleRow" style="gap:8px;">
+            <input type="checkbox" id="toggleShowCorrect" />
+            <span>Show correct answers</span>
+          </label>
+        </span>
+      ` : ``}
+    </div>
+
+    <div class="grid2" style="margin-top:12px;">
+      <div class="card" style="box-shadow:none; border:1px solid #eef2f7; margin:0;">
+        <h3 style="margin:0 0 8px; font-size:15px;">QR (open this quiz)</h3>
+        <div class="qrWrap">
+          <canvas id="qrCanvas" width="220" height="220"></canvas>
+          <div style="min-width: 240px;">
+            <div class="mini">Scan to open this page URL on your phone.</div>
+            <div style="height:10px;"></div>
+            <div class="btnrow" style="gap:8px;">
+              <button class="ghost smallBtn" id="btnCopyLink">Copy Link</button>
+              <button class="ghost smallBtn" id="btnRefreshQR">Refresh QR</button>
+            </div>
+            <div id="linkText" class="mini muted mono" style="margin-top:8px; word-break: break-all;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="box-shadow:none; border:1px solid #eef2f7; margin:0;">
+        <h3 style="margin:0 0 8px; font-size:15px;">My Attempts (this device)</h3>
+        <div class="mini muted">Saved under Student ID: <span class="mono">${escapeHTML(studentId)}</span></div>
+        <div style="height:10px;"></div>
+        <div style="overflow:auto; border:1px solid #eef2f7; border-radius:12px;">
+          <table>
+            <thead><tr><th>#</th><th>Time</th><th>Score</th><th>Unanswered</th></tr></thead>
+            <tbody id="myHistBody"></tbody>
+          </table>
+        </div>
+        <div style="height:10px;"></div>
+        <div class="btnrow">
+          <button class="ghost" id="btnExportMine">Export My JSON</button>
+          <button class="danger" id="btnClearMine">Clear My Data</button>
+        </div>
+        <div id="exportMineBox" class="mini mono" style="margin-top:10px; display:none; white-space:pre-wrap; word-break:break-word; background:#fafafa; border:1px solid #e5e7eb; padding:10px; border-radius:12px;"></div>
+      </div>
+    </div>
+
+    ${TEACHER_MODE ? `
+      <div class="card" style="box-shadow:none; border:1px solid #eef2f7; margin:12px 0 0;">
+        <h3 style="margin:0 0 8px; font-size:15px;">Teacher Dashboard (this device)</h3>
+        <div class="mini muted">
+          Aggregates <b>all Student IDs saved on this device</b>. If students use different phones, their data lives on their phones.
+        </div>
+
+        <div style="height:10px;"></div>
+
+        <details open>
+          <summary>Per-question Statistics</summary>
+          <div id="statsTableWrap" style="margin-top:10px;"></div>
+        </details>
+
+        <div style="height:10px;"></div>
+        <div class="btnrow">
+          <button class="ghost" id="btnExportAll">Export ALL JSON</button>
+          <button class="danger" id="btnClearAll">Clear ALL Data</button>
+        </div>
+        <div id="exportAllBox" class="mini mono" style="margin-top:10px; display:none; white-space:pre-wrap; word-break:break-word; background:#fafafa; border:1px solid #e5e7eb; padding:10px; border-radius:12px;"></div>
+      </div>
+    ` : ``}
+
+    <div style="margin-top:12px;">
+      <details>
+        <summary>Wrong-Note (My latest entries)</summary>
+        <div id="wrongList" style="margin-top:10px;"></div>
+      </details>
+    </div>
+  `;
+  return c;
+}
+
+function renderQuestions() {
+  const frag = document.createDocumentFragment();
+  quiz.forEach((item, idx) => {
+    const card = document.createElement("section");
+    card.className = "card";
+    card.dataset.qindex = idx;
+
+    const head = document.createElement("div");
+    head.className = "q-head";
+
+    const badge = document.createElement("div");
+    badge.className = "badge";
+    badge.textContent = idx + 1;
+
+    const qtext = document.createElement("p");
+    qtext.className = "q-text";
+    qtext.textContent = item.q;
+
+    head.appendChild(badge);
+    head.appendChild(qtext);
+
+    const options = document.createElement("div");
+    options.className = "options";
+
+    item.options.forEach((opt, j) => {
+      const label = document.createElement("label");
+      label.className = "opt";
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = `q${idx}`;
+      input.value = j;
+
+      const span = document.createElement("span");
+      span.textContent = `${letter(j)}. ${opt}`;
+
+      label.appendChild(input);
+      label.appendChild(span);
+      options.appendChild(label);
+    });
+
+    const result = document.createElement("div");
+    result.className = "result";
+    result.id = `result_${idx}`;
+
+    const explain = document.createElement("div");
+    explain.className = "explain";
+    explain.textContent = item.exp;
+
+    card.appendChild(head);
+    card.appendChild(options);
+    card.appendChild(result);
+    card.appendChild(explain);
+
+    frag.appendChild(card);
+  });
+  return frag;
+}
+
+function renderBottomControls() {
+  const c = document.createElement("div");
+  c.className = "controls";
+  c.innerHTML = `
+    <div class="btnrow">
+      <button class="primary" id="btnGrade">Grade & Save</button>
+      <button class="ghost" id="btnReset">Reset</button>
+    </div>
+    <div class="mini muted" style="margin-top:8px;">
+      After grading: correctness + explanation appear. Attempt is saved under your Student ID on this device.
+    </div>
+  `;
+  return c;
+}
+
+/* -------------------------
+   Wiring
+-------------------------- */
+function wireTopPanel() {
+  document.getElementById("btnCopyLink")?.addEventListener("click", copyLink);
+  document.getElementById("btnRefreshQR")?.addEventListener("click", refreshQR);
+  document.getElementById("btnChangeId")?.addEventListener("click", () => {
+    const val = prompt("Enter new Student ID:", studentId || "");
+    if (!val) return;
+    setStudentId(val.trim());
+  });
+
+  if (TEACHER_MODE) {
+    const toggle = document.getElementById("toggleShowCorrect");
+    if (toggle) {
+      toggle.checked = SHOW_CORRECT;
+      toggle.addEventListener("change", () => {
+        SHOW_CORRECT = toggle.checked;
+        if (SHOW_CORRECT) revealCorrectHints();
+        else hideCorrectHints();
+      });
+    }
+
+    document.getElementById("btnExportAll")?.addEventListener("click", exportAll);
+    document.getElementById("btnClearAll")?.addEventListener("click", clearAll);
+  }
+
+  document.getElementById("btnExportMine")?.addEventListener("click", exportMine);
+  document.getElementById("btnClearMine")?.addEventListener("click", clearMine);
+}
+
+function wireQuestionsControls() {
+  document.getElementById("btnGrade")?.addEventListener("click", gradeAndSave);
+  document.getElementById("btnReset")?.addEventListener("click", resetQuiz);
+}
+
+function copyLink() {
+  const url = location.href;
+  navigator.clipboard?.writeText(url)
+    .then(()=>alert("Link copied to clipboard."))
+    .catch(()=>prompt("Copy this link:", url));
+}
+
+function refreshQR() {
+  const canvas = document.getElementById("qrCanvas");
+  if (!canvas || !window.__makeQRCodeCanvas) return;
+  const url = location.href;
+  window.__makeQRCodeCanvas(url, canvas);
+  const linkText = document.getElementById("linkText");
+  if (linkText) linkText.textContent = url;
+}
+
+/* -------------------------
+   Student-specific panels refresh
+-------------------------- */
+function refreshStudentPanels() {
+  db = loadDB();
+  ensureStudent(db, studentId);
+  saveDB(db);
+
+  // my history
+  const s = db.students[studentId];
+  const body = document.getElementById("myHistBody");
+  if (body) {
+    body.innerHTML = "";
+    const attempts = (s.attempts || []).slice().reverse().slice(0, 20);
+    attempts.forEach((a, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${attempts.length - idx}</td>
+        <td>${formatTime(a.time)}</td>
+        <td><b>${a.score}</b> / ${a.total}</td>
+        <td>${a.unanswered || 0}</td>
+      `;
+      body.appendChild(tr);
+    });
+    if (!attempts.length) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td colspan="4" class="muted">No attempts yet.</td>`;
+      body.appendChild(tr);
+    }
+  }
+
+  // my wrong notes
+  refreshWrongNotes();
+
+  // teacher stats
+  if (TEACHER_MODE) refreshStats();
+}
+
+function refreshWrongNotes() {
+  const s = db.students[studentId];
+  const wrongNotes = (s.wrongNotes || []).slice().reverse();
+  const list = document.getElementById("wrongList");
+  if (!list) return;
+
+  list.innerHTML = "";
+  if (!wrongNotes.length) {
+    list.innerHTML = `<div class="mini muted">No wrong-notes saved yet. Grade once to create them.</div>`;
+    return;
+  }
+
+  wrongNotes.slice(0, 10).forEach((wn) => {
+    const div = document.createElement("div");
+    div.className = "noteItem";
+    div.innerHTML = `
+      <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <div><b>${formatTime(wn.time)}</b> <span class="muted">| Score ${wn.score}</span></div>
+        <div class="muted">Wrong: ${wn.wrongCount}</div>
+      </div>
+      <div style="margin-top:8px;">
+        ${wn.items.map(it => `
+          <div class="mini" style="margin-top:6px;">
+            <b>Q${it.qNo}</b> — chosen: <b>${it.chosen ?? "—"}</b>, correct: <b>${it.correct}</b><br/>
+            <span class="muted">${escapeHTML(it.question)}</span>
+          </div>
+        `).join("")}
+      </div>
+    `;
+    list.appendChild(div);
+  });
+
+  const more = document.createElement("div");
+  more.className = "mini muted";
+  more.style.marginTop = "8px";
+  more.textContent = wrongNotes.length > 10 ? `Showing latest 10 of ${wrongNotes.length} wrong-note entries.` : "";
+  list.appendChild(more);
+}
+
+function refreshStats() {
+  const wrap = document.getElementById("statsTableWrap");
+  if (!wrap) return;
+
+  const stats = computeAggregateStats(db);
+
+  const rows = stats.map((st, qi) => {
+    const total = st.totalAttempts || 0;
+    const correctRate = total ? (100 * st.correct / total) : 0;
+    const wrongRate = total ? (100 * st.wrong / total) : 0;
+    const unansRate = total ? (100 * st.unanswered / total) : 0;
+
+    const distTotal = st.choiceCount.reduce((a,b)=>a+b,0) || 1;
+    const dist = st.choiceCount.map(c => Math.round(100*c/distTotal));
+
+    return `
+      <tr>
+        <td><b>Q${qi+1}</b></td>
+        <td class="muted">${escapeHTML(quiz[qi].q)}</td>
+        <td>${total}</td>
+        <td><b>${correctRate.toFixed(1)}%</b></td>
+        <td>${wrongRate.toFixed(1)}%</td>
+        <td>${unansRate.toFixed(1)}%</td>
+        <td class="mono">A:${dist[0]}% B:${dist[1]}% C:${dist[2]}% D:${dist[3]}%</td>
+      </tr>
+    `;
+  }).join("");
+
+  wrap.innerHTML = `
+    <div style="overflow:auto; border:1px solid #eef2f7; border-radius:12px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Q</th><th>Question</th><th>Total attempts</th>
+            <th>Correct</th><th>Wrong</th><th>Unanswered</th><th>Choice distribution</th>
+          </tr>
+        </thead>
+        <tbody>${rows || ""}</tbody>
+      </table>
+    </div>
+    <div class="mini muted" style="margin-top:8px;">
+      “Total attempts” counts all saved attempts across all Student IDs on <b>this device</b>.
+    </div>
+  `;
+}
+
+/* -------------------------
+   Teacher show-correct helper
+-------------------------- */
+function revealCorrectHints() {
+  quiz.forEach((item, idx) => {
+    const result = document.getElementById(`result_${idx}`);
+    if (!result) return;
+    const hint = document.createElement("div");
+    hint.className = "mini muted";
+    hint.dataset.correctHint = "1";
+    hint.style.marginTop = "6px";
+    hint.innerHTML = `Correct answer: <b>${letter(item.answer)}</b>`;
+    // avoid duplicates
+    if (!result.querySelector('[data-correct-hint="1"]')) result.appendChild(hint);
+  });
+}
+function hideCorrectHints() {
+  document.querySelectorAll('[data-correct-hint="1"]').forEach(el => el.remove());
+}
+
+/* -------------------------
+   Grade + save (student-specific)
+-------------------------- */
+function gradeAndSave() {
+  db = loadDB();
+  const s = ensureStudent(db, studentId);
+
+  const answers = [];
+  const wrongItems = [];
+  let score = 0;
+  let unanswered = 0;
+
+  quiz.forEach((item, idx) => {
+    const chosen = document.querySelector(`input[name="q${idx}"]:checked`);
+    const result = document.getElementById(`result_${idx}`);
+    const explain = document.querySelector(`section[data-qindex="${idx}"] .explain`);
+    if (explain) explain.style.display = "block";
+
+    if (!chosen) {
+      unanswered++;
+      if (result) result.innerHTML = `<span class="bad">Unanswered.</span> ${TEACHER_MODE && SHOW_CORRECT ? `Correct: <b>${letter(item.answer)}</b>` : `Correct: <b>${letter(item.answer)}</b>`}`;
+      answers.push(null);
+      wrongItems.push({ qIndex: idx, question: item.q, chosen: null, correct: item.answer });
+      return;
+    }
+
+    const val = Number(chosen.value);
+    answers.push(val);
+
+    if (val === item.answer) {
+      score++;
+      if (result) result.innerHTML = `<span class="ok">Correct.</span>`;
+    } else {
+      if (result) result.innerHTML = `<span class="bad">Wrong.</span> You chose <b>${letter(val)}</b>, correct is <b>${letter(item.answer)}</b>.`;
+      wrongItems.push({ qIndex: idx, question: item.q, chosen: val, correct: item.answer });
+    }
+  });
+
+  const attempt = { time: nowISO(), score, total: quiz.length, unanswered, answers };
+  s.attempts = s.attempts || [];
+  s.attempts.push(attempt);
+
+  if (wrongItems.length) {
+    s.wrongNotes = s.wrongNotes || [];
+    s.wrongNotes.push({
+      time: attempt.time,
+      score: `${score}/${quiz.length}`,
+      wrongCount: wrongItems.length,
+      items: wrongItems.map(w => ({
+        qNo: w.qIndex + 1,
+        question: w.question,
+        chosen: (w.chosen === null ? null : letter(w.chosen)),
+        correct: letter(w.correct)
+      }))
+    });
+  }
+
+  db.students[studentId] = s;
+  db.currentStudentId = studentId;
+  saveDB(db);
+
+  alert(`Score: ${score} / ${quiz.length} (Unanswered: ${unanswered})\nSaved under Student ID: ${studentId}`);
+  refreshStudentPanels();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  if (TEACHER_MODE && SHOW_CORRECT) revealCorrectHints();
+}
+
+function resetQuiz() {
+  document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+  document.querySelectorAll(".result").forEach(r => r.textContent = "");
+  document.querySelectorAll(".explain").forEach(e => e.style.display = "none");
+  if (TEACHER_MODE) {
+    // keep correct hints setting, but remove existing hints until re-grade or toggle
+    hideCorrectHints();
+    if (SHOW_CORRECT) revealCorrectHints();
+  }
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* -------------------------
+   Export / Clear
+-------------------------- */
+function exportMine() {
+  db = loadDB();
+  const s = ensureStudent(db, studentId);
+  const payload = { studentId, data: s, exportedAt: nowISO() };
+  const box = document.getElementById("exportMineBox");
+  if (box) {
+    box.style.display = "block";
+    box.textContent = JSON.stringify(payload, null, 2);
+  }
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function clearMine() {
+  const ok = confirm(`Clear saved attempts & wrong-notes for Student ID "${studentId}" on this device?`);
+  if (!ok) return;
+  db = loadDB();
+  if (db.students && db.students[studentId]) {
+    db.students[studentId] = { attempts: [], wrongNotes: [] };
+    saveDB(db);
+  }
+  alert("Cleared.");
+  refreshStudentPanels();
+}
+
+function exportAll() {
+  db = loadDB();
+  const payload = { teacherMode: true, db, exportedAt: nowISO() };
+  const box = document.getElementById("exportAllBox");
+  if (box) {
+    box.style.display = "block";
+    box.textContent = JSON.stringify(payload, null, 2);
+  }
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function clearAll() {
+  const ok = confirm("Clear ALL Student IDs data on this device? This cannot be undone.");
+  if (!ok) return;
+  localStorage.removeItem(KEY_DB);
+  alert("All data cleared.");
+  db = loadDB();
+  studentId = "";
+  renderAll();
+}
+
+/* -------------------------
+   Init
+-------------------------- */
+renderAll();
+</script>
+</body>
+</html>
