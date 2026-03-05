@@ -23,7 +23,7 @@
     .card { background:#fff; border-radius: 14px; padding: 14px; box-shadow: 0 8px 22px rgba(0,0,0,.08); margin-bottom: 12px; }
     .muted { color:#586174; font-size: 13px; }
     .small { font-size:12px; }
-    input[type="text"]{ width:100%; padding:10px 12px; border:1px solid #d9dbe7; border-radius: 10px; font-size: 14px; }
+    input[type="text"]{ width:100%; padding:10px 12px; border:1px solid #d9dbe7; border-radius: 10px; font-size: 14px; box-sizing:border-box; }
     button { border:0; border-radius:10px; padding:10px 12px; font-weight:800; cursor:pointer; }
     button.primary{ background:#111; color:#fff; }
     button.secondary{ background:#e9ebf5; color:#111; }
@@ -40,45 +40,35 @@
     .linkbtn { text-decoration:none; display:inline-flex; align-items:center; gap:8px; }
     .pill { padding:6px 10px; border-radius:999px; background:#eef0ff; color:#2431a5; font-size:12px; font-weight:800; }
 
-    /* ✅ 핵심: row가 줄바꿈(wrap)되게 + 간격 */
+    /* Layout: prevent overlap */
     .row{
       display:flex;
       gap:10px;
-      flex-wrap:wrap;          /* <-- 이게 없으면 좁을 때 겹칠 수 있음 */
+      flex-wrap:wrap;
       align-items:flex-start;
     }
-    
-    /* ✅ 입력칸: 최소 폭을 보장하면서 남는 공간을 먹기 */
     .grow{
-      flex: 1 1 360px;         /* <-- basis(기본폭) 지정 */
-      min-width: 260px;        /* <-- 너무 좁아지면 아래로 내려가게 */
+      flex: 1 1 360px;
+      min-width: 260px;
     }
-    
-    /* ✅ 버튼 묶음: 내용만큼만 차지 + 최소 폭 */
     .actions{
-      flex: 0 0 auto;          /* <-- grow에 침범하지 않게 */
+      flex: 0 0 auto;
       display:flex;
       gap:10px;
       flex-wrap:wrap;
       min-width: 220px;
     }
-    
-    .actions button{
-      white-space:nowrap;
-    }
-    
-    /* ✅ 아주 좁은 화면: 버튼을 100%로 아래로 */
+    .actions button{ white-space:nowrap; }
+
     @media (max-width: 720px){
       .actions{ width:100%; }
       .actions button{ width:100%; }
     }
-    input[type="text"]{ box-sizing:border-box; }
 
-  table.stats { width:100%; border-collapse:collapse; font-size:13px; margin-top:10px; }
-  table.stats th, table.stats td { border-bottom:1px solid #eef0f7; padding:8px 6px; text-align:right; }
-  table.stats th:first-child, table.stats td:first-child { text-align:left; }
-  .bad { font-weight:900; }
-    
+    table.stats { width:100%; border-collapse:collapse; font-size:13px; margin-top:10px; }
+    table.stats th, table.stats td { border-bottom:1px solid #eef0f7; padding:8px 6px; text-align:right; }
+    table.stats th:first-child, table.stats td:first-child { text-align:left; }
+    .bad { font-weight:900; }
   </style>
 </head>
 
@@ -102,14 +92,14 @@
           <div class="muted">Student ID (required)</div>
           <input id="studentId" type="text" placeholder="e.g., 20261234" autocomplete="off" />
         </div>
-        
-      <div class="actions">
-        <button class="secondary" id="btnTeacher">Teacher Mode</button>
-        <button class="secondary" id="btnStart">Start</button>
-        <button class="primary" id="btnSubmit" disabled>Submit</button>
+
+        <div class="actions">
+          <button class="secondary" id="btnTeacher" type="button">Teacher Mode</button>
+          <button class="secondary" id="btnStart" type="button">Start</button>
+          <button class="primary" id="btnSubmit" type="button" disabled>Submit</button>
+        </div>
       </div>
-        
-      </div>
+
       <div class="divider"></div>
       <div class="muted small" id="loadStatus">Loading questions…</div>
       <div class="muted small" id="saveStatus">Not submitted yet.</div>
@@ -123,11 +113,10 @@
 
       <div class="divider"></div>
       <div class="qtitle">Post-Quiz Statistics</div>
-      <div class="muted small" id="statsStatus">
-        Statistics will appear after quiz submission.
-      </div>
+      <div class="muted small" id="statsStatus">Statistics will appear after quiz submission.</div>
       <div id="statsTableWrap"></div>
-      
+
+      <div class="divider"></div>
       <div class="row">
         <a id="btnOpenResults" class="linkbtn" target="_blank" rel="noopener">
           <button class="secondary" type="button">Open Results Sheet</button>
@@ -175,7 +164,6 @@
     function getLectureFromUrl() {
       const p = new URLSearchParams(location.search);
       const raw = (p.get("lecture") || "").trim();
-      // allow "Lecture%203" etc; URLSearchParams already decoded
       return raw || DEFAULT_LECTURE;
     }
 
@@ -199,7 +187,29 @@
         .replaceAll("'","&#039;");
     }
 
-    // JSONP loader
+    // ===== JSONP helper (CORS-free for Apps Script GET endpoints) =====
+    function jsonp(url){
+      return new Promise((resolve, reject) => {
+        const cb = "cb_" + Math.random().toString(36).slice(2);
+        window[cb] = (data) => {
+          try { resolve(data); }
+          finally {
+            delete window[cb];
+            s.remove();
+          }
+        };
+        const s = document.createElement("script");
+        s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + encodeURIComponent(cb);
+        s.onerror = () => {
+          delete window[cb];
+          s.remove();
+          reject(new Error("JSONP load failed"));
+        };
+        document.head.appendChild(s);
+      });
+    }
+
+    // JSONP loader (questions)
     function loadQuestions() {
       if (!WEBAPP_URL || WEBAPP_URL.includes("PUT_YOUR_WEBAPP_URL_HERE")) {
         $("loadStatus").textContent = "ERROR: WebApp URL not set.";
@@ -313,6 +323,7 @@
     }
 
     async function saveToSheet(payload){
+      // NOTE: no-cors means we can't read the response; but it avoids CORS issues for POST.
       await fetch(WEBAPP_URL, {
         method: "POST",
         mode: "no-cors",
@@ -321,27 +332,24 @@
       });
     }
 
-    // ===== Teacher links =====
+    // ===== Teacher links (JSONP; CORS-free) =====
     async function loadTeacherLinks(){
       try{
         $("teacherLinksStatus").textContent = "Loading links…";
         const url = `${WEBAPP_URL}?action=links&lecture=${encodeURIComponent(LECTURE)}`;
-        const res = await fetch(url, { method:"GET" });
-        const data = await res.json();
+        const data = await jsonp(url);
+
         if (!data.ok) throw new Error(data.message || "links not ok");
 
-        // Open Results sheet (base)
         $("btnOpenResults").href = data.resultsUrl;
-
-        // Open specific tabs by #gid is hard without lookup; still useful to open sheet and select tab.
-        // We provide anchors hint via query string, but Sheets ignores it. We'll show tab names.
         $("btnOpenGradebook").href = data.resultsUrl;
         $("btnOpenStats").href = data.resultsUrl;
 
         $("teacherLinksStatus").textContent =
           `Tabs: Gradebook, ${data.statsTab || ("Stats - "+LECTURE)}, and ${LECTURE} (results log).`;
       } catch(e){
-        $("teacherLinksStatus").textContent = "Link load failed (check action=links deployed/public): " + (e?.message || "unknown");
+        $("teacherLinksStatus").textContent =
+          "Link load failed: " + (e?.message || "unknown");
       }
     }
 
@@ -349,38 +357,37 @@
       if (!isFinite(x)) return "-";
       return (x*100).toFixed(1) + "%";
     }
-    
+
+    // ===== Stats (JSONP; CORS-free) =====
     async function loadStatsAndRender(){
       try{
         $("statsStatus").textContent = "Loading stats…";
         const url = `${WEBAPP_URL}?action=stats&lecture=${encodeURIComponent(LECTURE)}`;
-        const res = await fetch(url, { method:"GET" });
-        const data = await res.json();
+        const data = await jsonp(url);
+
         if (!data.ok) throw new Error(data.message || "stats not ok");
-    
-        // rows: [{q, attempts, correct, incorrect, correctRate, wrongRate, pick0..3}]
+
         const rows = data.rows || [];
         if (!rows.length) throw new Error("No stats rows.");
-    
-        // 가장 많이 틀린 Top 3 표시(오답률 기준)
+
         const topWrong = [...rows]
           .filter(r => (r.attempts||0) > 0)
           .sort((a,b) => (b.wrongRate||0) - (a.wrongRate||0))
           .slice(0,3);
-    
+
         let html = "";
         html += `<div class="muted small">Top wrong questions: ` +
                 topWrong.map(r => `Q${r.q} (${pct(r.wrongRate)})`).join(", ") +
                 `</div>`;
-    
+
         html += `<table class="stats"><thead><tr>
           <th>Q#</th><th>Attempts</th><th>Correct</th><th>Wrong</th>
           <th>Correct%</th><th>Wrong%</th>
           <th>Pick0</th><th>Pick1</th><th>Pick2</th><th>Pick3</th>
         </tr></thead><tbody>`;
-    
+
         rows.forEach(r=>{
-          const wrongHigh = (r.wrongRate||0) >= 0.5 && (r.attempts||0) >= 5; // 토론용 하이라이트 기준(조절 가능)
+          const wrongHigh = (r.wrongRate||0) >= 0.5 && (r.attempts||0) >= 5;
           html += `<tr>
             <td>${wrongHigh ? `<span class="bad">Q${r.q}</span>` : `Q${r.q}`}</td>
             <td>${r.attempts||0}</td>
@@ -391,18 +398,19 @@
             <td>${r.pick0||0}</td><td>${r.pick1||0}</td><td>${r.pick2||0}</td><td>${r.pick3||0}</td>
           </tr>`;
         });
-    
+
         html += `</tbody></table>`;
-    
+
         $("statsTableWrap").innerHTML = html;
         $("statsTableWrap").classList.remove("hidden");
         $("statsStatus").textContent = `Loaded: ${data.sheet}`;
       } catch(e){
         $("statsStatus").textContent = "Stats load failed: " + (e?.message || "unknown");
+        $("statsTableWrap").innerHTML = "";
         $("statsTableWrap").classList.add("hidden");
       }
     }
-    
+
     function revealTeacherDetails(){
       if (!TEACHER_MODE) return;
       $("teacherCard").classList.remove("hidden");
