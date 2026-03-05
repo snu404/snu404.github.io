@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ME211A Lecture 3 Quiz</title>
-
   <style>
     :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
     body { margin: 0; background: #f6f7fb; color: #111; }
@@ -35,6 +34,7 @@
     .qtitle { font-weight: 900; margin-bottom: 10px; }
     .opt { display:block; padding: 10px 10px; border: 1px solid #dde0ee; border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
     .opt input { margin-right: 8px; }
+    .qimg{ max-width:100%; border-radius:12px; margin:10px 0; border:1px solid #eef0f7; }
 
     .hidden { display:none !important; }
     .teacher { border: 1px dashed #b7bdff; background: #fbfbff; }
@@ -46,8 +46,8 @@
     <div class="header-left">
       <img class="logo" src="KAIST_logo.jpg" alt="KAIST logo" />
       <div class="titlewrap">
-        <h1>ME211A — Lecture 3 Quiz</h1>
-        <div class="sub">Questions are loaded from Google Sheet. Teacher Mode requires password.</div>
+        <h1 id="title">ME211A — Lecture 3 Quiz</h1>
+        <div class="sub">Enter Student ID → Start → Submit. Teacher Mode shows answers after submit.</div>
       </div>
     </div>
     <img id="qrImg" class="qr" alt="QR code" />
@@ -71,7 +71,7 @@
         </div>
       </div>
       <div class="divider"></div>
-      <div class="muted small" id="loadStatus">Loading questions from sheet...</div>
+      <div class="muted small" id="loadStatus">Loading questions…</div>
       <div class="muted small" id="saveStatus">Not submitted yet.</div>
     </div>
 
@@ -100,43 +100,38 @@
     const LECTURE = "Lecture 3";
     const TEACHER_PASSWORD = "1730";
 
-    // ✅ Apps Script Web App URL (배포 후 URL을 여기에)
+    // ✅ Apps Script Web App URL
     const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzZljM3azXE-1C_DeUG4uICGeuk8WlbDpFxhnMnPNTtI2VIwOcYJOvGYtnhCKQgQlZ2Nw/exec";
 
-    // JSONP callback name
-    const JSONP_CALLBACK = "initQuizFromSheet";
+    const JSONP_CALLBACK = "initQuizFromServer";
 
     let TEACHER_MODE = false;
-    let quiz = []; // <-- loaded from sheet
+    let quiz = [];
 
-    // =========================
     // QR code: current URL
-    // =========================
     (function initQR(){
       const url = location.href;
       document.getElementById("qrImg").src =
         "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" + encodeURIComponent(url);
     })();
 
-    // =========================
-    // JSONP loader (no CORS)
-    // =========================
+    document.getElementById("title").textContent = `ME211A — ${LECTURE} Quiz`;
+
+    // JSONP loader
     function loadQuestions() {
       if (!WEBAPP_URL || WEBAPP_URL.includes("PUT_YOUR_WEBAPP_URL_HERE")) {
         document.getElementById("loadStatus").textContent = "ERROR: WebApp URL not set.";
         return;
       }
       const s = document.createElement("script");
-      const url = `${WEBAPP_URL}?lecture=${encodeURIComponent(LECTURE)}&callback=${encodeURIComponent(JSONP_CALLBACK)}`;
-      s.src = url;
+      s.src = `${WEBAPP_URL}?lecture=${encodeURIComponent(LECTURE)}&callback=${encodeURIComponent(JSONP_CALLBACK)}`;
       s.onerror = () => {
-        document.getElementById("loadStatus").textContent = "Failed to load questions (check WebApp URL / deployment).";
+        document.getElementById("loadStatus").textContent = "Failed to load questions (check WebApp deployment/public access).";
       };
       document.head.appendChild(s);
     }
 
-    // This is called by JSONP: initQuizFromSheet({...})
-    function initQuizFromSheet(payload) {
+    function initQuizFromServer(payload) {
       if (!payload || !payload.ok) {
         document.getElementById("loadStatus").textContent =
           "ERROR loading questions: " + (payload?.message || "unknown");
@@ -144,16 +139,11 @@
       }
       quiz = payload.quiz || [];
       document.getElementById("loadStatus").textContent =
-        `Loaded ${quiz.length} questions from "${LECTURE} Questions".`;
+        `Loaded ${quiz.length} questions from Questions/${LECTURE}.`;
       renderQuiz();
     }
+    window[JSONP_CALLBACK] = initQuizFromServer;
 
-    // Expose callback to global scope (required)
-    window[JSONP_CALLBACK] = initQuizFromSheet;
-
-    // =========================
-    // UI helpers
-    // =========================
     const $ = (id) => document.getElementById(id);
 
     function escapeHtml(s){
@@ -182,6 +172,14 @@
         title.innerHTML = `${idx+1}. ${escapeHtml(item.q)}`;
         card.appendChild(title);
 
+        if (item.img) {
+          const im = document.createElement("img");
+          im.className = "qimg";
+          im.src = item.img;
+          im.alt = `Question ${idx+1} image`;
+          card.appendChild(im);
+        }
+
         item.options.forEach((opt, j) => {
           const lab = document.createElement("label");
           lab.className = "opt";
@@ -189,7 +187,6 @@
           card.appendChild(lab);
         });
 
-        // teacher-only parts
         const exp = document.createElement("div");
         exp.className = "muted small hidden teacher-only";
         exp.innerHTML = `<div class="divider"></div><div><b>Explanation:</b> ${escapeHtml(item.exp || "")}</div>`;
@@ -250,10 +247,8 @@
       document.querySelectorAll(".teacher-only").forEach(el => el.classList.remove("hidden"));
     }
 
-    // =========================
-    // Save (POST) - no-cors for robust saving
-    // =========================
     async function saveToSheet(payload){
+      // no-cors for robust saving
       await fetch(WEBAPP_URL, {
         method: "POST",
         mode: "no-cors",
@@ -262,9 +257,6 @@
       });
     }
 
-    // =========================
-    // Events
-    // =========================
     $("btnTeacher").addEventListener("click", () => {
       const pw = prompt("Teacher password:");
       if (pw === TEACHER_PASSWORD) {
@@ -307,11 +299,11 @@
         answers
       };
 
-      $("saveStatus").textContent = `Saving → "${LECTURE} Quiz" (append) and updating "${LECTURE} Quiz Stats"...`;
+      $("saveStatus").textContent = `Saving to Results/${LECTURE} + Gradebook + Stats…`;
 
       try {
         await saveToSheet(payload);
-        $("saveStatus").textContent = `Saved (sent) ✅ → "${LECTURE} Quiz" + Stats updated`;
+        $("saveStatus").textContent = `Saved ✅ (Results/${LECTURE} updated)`;
       } catch (e) {
         $("saveStatus").textContent = "Save failed: " + (e?.message || "unknown");
       }
@@ -326,9 +318,6 @@
       window.scrollTo({ top: $("summaryCard").offsetTop - 8, behavior: "smooth" });
     });
 
-    // =========================
-    // Init
-    // =========================
     loadQuestions();
   </script>
 </body>
