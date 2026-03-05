@@ -73,6 +73,12 @@
       .actions button{ width:100%; }
     }
     input[type="text"]{ box-sizing:border-box; }
+
+  table.stats { width:100%; border-collapse:collapse; font-size:13px; margin-top:10px; }
+  table.stats th, table.stats td { border-bottom:1px solid #eef0f7; padding:8px 6px; text-align:right; }
+  table.stats th:first-child, table.stats td:first-child { text-align:left; }
+  .bad { font-weight:900; }
+    
   </style>
 </head>
 
@@ -115,6 +121,13 @@
         Correct answers & explanations become visible after Submit.
       </div>
 
+      <div class="divider"></div>
+      <div class="qtitle">Post-Quiz Statistics</div>
+      <div class="muted small" id="statsStatus">
+        Statistics will appear after quiz submission.
+      </div>
+      <div id="statsTableWrap"></div>
+      
       <div class="row">
         <a id="btnOpenResults" class="linkbtn" target="_blank" rel="noopener">
           <button class="secondary" type="button">Open Results Sheet</button>
@@ -332,11 +345,70 @@
       }
     }
 
+    function pct(x){
+      if (!isFinite(x)) return "-";
+      return (x*100).toFixed(1) + "%";
+    }
+    
+    async function loadStatsAndRender(){
+      try{
+        $("statsStatus").textContent = "Loading stats…";
+        const url = `${WEBAPP_URL}?action=stats&lecture=${encodeURIComponent(LECTURE)}`;
+        const res = await fetch(url, { method:"GET" });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.message || "stats not ok");
+    
+        // rows: [{q, attempts, correct, incorrect, correctRate, wrongRate, pick0..3}]
+        const rows = data.rows || [];
+        if (!rows.length) throw new Error("No stats rows.");
+    
+        // 가장 많이 틀린 Top 3 표시(오답률 기준)
+        const topWrong = [...rows]
+          .filter(r => (r.attempts||0) > 0)
+          .sort((a,b) => (b.wrongRate||0) - (a.wrongRate||0))
+          .slice(0,3);
+    
+        let html = "";
+        html += `<div class="muted small">Top wrong questions: ` +
+                topWrong.map(r => `Q${r.q} (${pct(r.wrongRate)})`).join(", ") +
+                `</div>`;
+    
+        html += `<table class="stats"><thead><tr>
+          <th>Q#</th><th>Attempts</th><th>Correct</th><th>Wrong</th>
+          <th>Correct%</th><th>Wrong%</th>
+          <th>Pick0</th><th>Pick1</th><th>Pick2</th><th>Pick3</th>
+        </tr></thead><tbody>`;
+    
+        rows.forEach(r=>{
+          const wrongHigh = (r.wrongRate||0) >= 0.5 && (r.attempts||0) >= 5; // 토론용 하이라이트 기준(조절 가능)
+          html += `<tr>
+            <td>${wrongHigh ? `<span class="bad">Q${r.q}</span>` : `Q${r.q}`}</td>
+            <td>${r.attempts||0}</td>
+            <td>${r.correct||0}</td>
+            <td>${r.incorrect||0}</td>
+            <td>${pct(r.correctRate||0)}</td>
+            <td>${pct(r.wrongRate||0)}</td>
+            <td>${r.pick0||0}</td><td>${r.pick1||0}</td><td>${r.pick2||0}</td><td>${r.pick3||0}</td>
+          </tr>`;
+        });
+    
+        html += `</tbody></table>`;
+    
+        $("statsTableWrap").innerHTML = html;
+        $("statsTableWrap").classList.remove("hidden");
+        $("statsStatus").textContent = `Loaded: ${data.sheet}`;
+      } catch(e){
+        $("statsStatus").textContent = "Stats load failed: " + (e?.message || "unknown");
+        $("statsTableWrap").classList.add("hidden");
+      }
+    }
+    
     function revealTeacherDetails(){
       if (!TEACHER_MODE) return;
       $("teacherCard").classList.remove("hidden");
       document.querySelectorAll(".teacher-only").forEach(el => el.classList.remove("hidden"));
       loadTeacherLinks();
+      loadStatsAndRender();
     }
 
     $("btnTeacher").addEventListener("click", () => {
