@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ME211 Quiz</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    body { margin: 0; background: #f6f7fb; color: #111; }
+    header{
+      background:#fff; border-bottom:1px solid #e5e7f2;
+      padding:12px 16px; display:flex; align-items:center; justify-content:space-between;
+      gap: 12px;
+    }
+    .header-left{ display:flex; align-items:center; gap:16px; min-width: 0; }
+    .logo{ height:44px; }
+    .titlewrap{ min-width:0; }
+    .titlewrap h1{ margin:0; font-size:18px; font-weight:800; line-height:1.15; }
+    .titlewrap .sub{ margin-top:6px; font-size:12px; color:#586174; }
+    .qr{ width:74px; height:74px; border-radius:10px; border:1px solid #eef0f7; background:#fff; }
+
+    main { max-width: 860px; margin: 0 auto; padding: 16px; }
+    .card { background:#fff; border-radius: 14px; padding: 14px; box-shadow: 0 8px 22px rgba(0,0,0,.08); margin-bottom: 12px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .grow { flex:1; min-width: 220px; }
+    .muted { color:#586174; font-size: 13px; }
+    .small { font-size:12px; }
+    input[type="text"]{ width:100%; padding:10px 12px; border:1px solid #d9dbe7; border-radius: 10px; font-size: 14px; }
+    button { border:0; border-radius:10px; padding:10px 12px; font-weight:800; cursor:pointer; }
+    button.primary{ background:#111; color:#fff; }
+    button.secondary{ background:#e9ebf5; color:#111; }
+    button:disabled{ opacity:.5; cursor:not-allowed; }
+    .divider{ height:1px; background:#eef0f7; margin:12px 0; }
+
+    .qtitle { font-weight: 900; margin-bottom: 10px; }
+    .opt { display:block; padding: 10px 10px; border: 1px solid #dde0ee; border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
+    .opt input { margin-right: 8px; }
+    .qimg{ max-width:100%; border-radius:12px; margin:10px 0; border:1px solid #eef0f7; }
+
+    .hidden { display:none !important; }
+    .teacher { border: 1px dashed #b7bdff; background: #fbfbff; }
+    .linkbtn { text-decoration:none; display:inline-flex; align-items:center; gap:8px; }
+    .pill { padding:6px 10px; border-radius:999px; background:#eef0ff; color:#2431a5; font-size:12px; font-weight:800; }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="header-left">
+      <img class="logo" src="KAIST_logo.jpg" alt="KAIST logo" />
+      <div class="titlewrap">
+        <h1 id="title">ME211 Quiz</h1>
+        <div class="sub" id="subtitle">Enter Student ID → Start → Submit. Teacher Mode shows answers after submit.</div>
+        <div class="sub"><span class="pill" id="lecturePill"></span></div>
+      </div>
+    </div>
+    <img id="qrImg" class="qr" alt="QR code" />
+  </header>
+
+  <main>
+    <div class="card" id="studentCard">
+      <div class="row">
+        <div class="grow">
+          <div class="muted">Student ID (required)</div>
+          <input id="studentId" type="text" placeholder="e.g., 20261234" autocomplete="off" />
+        </div>
+        <div>
+          <button class="secondary" id="btnTeacher">Teacher Mode</button>
+        </div>
+        <div>
+          <button class="secondary" id="btnStart">Start</button>
+        </div>
+        <div>
+          <button class="primary" id="btnSubmit" disabled>Submit</button>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="muted small" id="loadStatus">Loading questions…</div>
+      <div class="muted small" id="saveStatus">Not submitted yet.</div>
+    </div>
+
+    <div class="card teacher hidden" id="teacherCard">
+      <div class="qtitle">Teacher Mode</div>
+      <div class="muted" style="margin-bottom:10px;">
+        Correct answers & explanations become visible after Submit.
+      </div>
+
+      <div class="row">
+        <a id="btnOpenResults" class="linkbtn" target="_blank" rel="noopener">
+          <button class="secondary" type="button">Open Results Sheet</button>
+        </a>
+        <a id="btnOpenGradebook" class="linkbtn" target="_blank" rel="noopener">
+          <button class="secondary" type="button">Open Gradebook</button>
+        </a>
+        <a id="btnOpenStats" class="linkbtn" target="_blank" rel="noopener">
+          <button class="secondary" type="button">Open Stats (this lecture)</button>
+        </a>
+        <div class="muted small" id="teacherLinksStatus"></div>
+      </div>
+    </div>
+
+    <div id="quizArea"></div>
+
+    <div class="card hidden" id="summaryCard">
+      <div class="row">
+        <div class="grow">
+          <div class="qtitle">Result</div>
+          <div class="muted" id="summaryLine"></div>
+        </div>
+        <div class="qtitle" id="scoreLine"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // =========================
+    // CONFIG
+    // =========================
+    const DEFAULT_LECTURE = "Lecture 3";
+    const TEACHER_PASSWORD = "1730";
+
+    // ✅ Apps Script Web App URL
+    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzZljM3azXE-1C_DeUG4uICGeuk8WlbDpFxhnMnPNTtI2VIwOcYJOvGYtnhCKQgQlZ2Nw/exec";
+
+    const JSONP_CALLBACK = "initQuizFromServer";
+
+    let TEACHER_MODE = false;
+    let quiz = [];
+
+    const $ = (id) => document.getElementById(id);
+
+    function getLectureFromUrl() {
+      const p = new URLSearchParams(location.search);
+      const raw = (p.get("lecture") || "").trim();
+      // allow "Lecture%203" etc; URLSearchParams already decoded
+      return raw || DEFAULT_LECTURE;
+    }
+
+    const LECTURE = getLectureFromUrl();
+
+    // Title
+    $("title").textContent = `ME211 Quiz`;
+    $("lecturePill").textContent = LECTURE;
+    document.title = `ME211 Quiz - ${LECTURE}`;
+
+    // QR code points to current URL (with lecture param)
+    (function initQR(){
+      const url = location.href;
+      $("qrImg").src = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" + encodeURIComponent(url);
+    })();
+
+    function escapeHtml(s){
+      return (s ?? "").toString()
+        .replaceAll("&","&amp;").replaceAll("<","&lt;")
+        .replaceAll(">","&gt;").replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    // JSONP loader
+    function loadQuestions() {
+      if (!WEBAPP_URL || WEBAPP_URL.includes("PUT_YOUR_WEBAPP_URL_HERE")) {
+        $("loadStatus").textContent = "ERROR: WebApp URL not set.";
+        return;
+      }
+      const s = document.createElement("script");
+      s.src = `${WEBAPP_URL}?lecture=${encodeURIComponent(LECTURE)}&callback=${encodeURIComponent(JSONP_CALLBACK)}`;
+      s.onerror = () => {
+        $("loadStatus").textContent = "Failed to load questions (check WebApp deployment/public access).";
+      };
+      document.head.appendChild(s);
+    }
+
+    function initQuizFromServer(payload) {
+      if (!payload || !payload.ok) {
+        $("loadStatus").textContent = "ERROR loading questions: " + (payload?.message || "unknown");
+        return;
+      }
+      quiz = payload.quiz || [];
+      $("loadStatus").textContent = `Loaded ${quiz.length} questions from Questions/${LECTURE}.`;
+      renderQuiz();
+    }
+    window[JSONP_CALLBACK] = initQuizFromServer;
+
+    function renderQuiz(){
+      const area = $("quizArea");
+      area.innerHTML = "";
+
+      if (!quiz.length) {
+        area.innerHTML = `<div class="card"><div class="muted">No questions loaded.</div></div>`;
+        return;
+      }
+
+      quiz.forEach((item, idx) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.dataset.qidx = idx;
+
+        const title = document.createElement("div");
+        title.className = "qtitle";
+        title.innerHTML = `${idx+1}. ${escapeHtml(item.q)}`;
+        card.appendChild(title);
+
+        if (item.img) {
+          const im = document.createElement("img");
+          im.className = "qimg";
+          im.src = item.img;
+          im.alt = `Question ${idx+1} image`;
+          card.appendChild(im);
+        }
+
+        item.options.forEach((opt, j) => {
+          const lab = document.createElement("label");
+          lab.className = "opt";
+          lab.innerHTML = `<input type="radio" name="q${idx}" value="${j}"> ${escapeHtml(opt)}`;
+          card.appendChild(lab);
+        });
+
+        const exp = document.createElement("div");
+        exp.className = "muted small hidden teacher-only";
+        exp.innerHTML = `<div class="divider"></div><div><b>Explanation:</b> ${escapeHtml(item.exp || "")}</div>`;
+        card.appendChild(exp);
+
+        const ans = document.createElement("div");
+        ans.className = "muted small hidden teacher-only";
+        ans.innerHTML = `<div><b>Correct answer:</b> ${escapeHtml(item.options[item.answer])}</div>`;
+        card.appendChild(ans);
+
+        area.appendChild(card);
+      });
+    }
+
+    function allAnswered(){
+      for (let i=0;i<quiz.length;i++){
+        if (!document.querySelector(`input[name="q${i}"]:checked`)) return false;
+      }
+      return true;
+    }
+
+    function lockInputs(){
+      document.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
+      $("btnSubmit").disabled = true;
+      $("btnStart").disabled = true;
+      $("studentId").disabled = true;
+      $("btnTeacher").disabled = true;
+    }
+
+    function gradeAndMark(){
+      let correct = 0;
+      for (let i=0;i<quiz.length;i++){
+        const checked = document.querySelector(`input[name="q${i}"]:checked`);
+        const picked = checked ? parseInt(checked.value, 10) : -1;
+
+        const card = document.querySelector(`.card[data-qidx="${i}"]`);
+        const labels = card.querySelectorAll("label.opt");
+        labels.forEach((lab, j) => {
+          lab.style.borderColor = "#dde0ee";
+          lab.style.background = "#fff";
+          if (picked === j && picked === quiz[i].answer) {
+            lab.style.borderColor = "#0b7a3a";
+            lab.style.background = "rgba(11,122,58,.08)";
+          } else if (picked === j && picked !== quiz[i].answer) {
+            lab.style.borderColor = "#b5001a";
+            lab.style.background = "rgba(181,0,26,.06)";
+          }
+        });
+
+        if (picked === quiz[i].answer) correct++;
+      }
+      return correct;
+    }
+
+    async function saveToSheet(payload){
+      await fetch(WEBAPP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    // ===== Teacher links =====
+    async function loadTeacherLinks(){
+      try{
+        $("teacherLinksStatus").textContent = "Loading links…";
+        const url = `${WEBAPP_URL}?action=links&lecture=${encodeURIComponent(LECTURE)}`;
+        const res = await fetch(url, { method:"GET" });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.message || "links not ok");
+
+        // Open Results sheet (base)
+        $("btnOpenResults").href = data.resultsUrl;
+
+        // Open specific tabs by #gid is hard without lookup; still useful to open sheet and select tab.
+        // We provide anchors hint via query string, but Sheets ignores it. We'll show tab names.
+        $("btnOpenGradebook").href = data.resultsUrl;
+        $("btnOpenStats").href = data.resultsUrl;
+
+        $("teacherLinksStatus").textContent =
+          `Tabs: Gradebook, ${data.statsTab || ("Stats - "+LECTURE)}, and ${LECTURE} (results log).`;
+      } catch(e){
+        $("teacherLinksStatus").textContent = "Link load failed (check action=links deployed/public): " + (e?.message || "unknown");
+      }
+    }
+
+    function revealTeacherDetails(){
+      if (!TEACHER_MODE) return;
+      $("teacherCard").classList.remove("hidden");
+      document.querySelectorAll(".teacher-only").forEach(el => el.classList.remove("hidden"));
+      loadTeacherLinks();
+    }
+
+    $("btnTeacher").addEventListener("click", () => {
+      const pw = prompt("Teacher password:");
+      if (pw === TEACHER_PASSWORD) {
+        TEACHER_MODE = true;
+        alert("Teacher Mode enabled.");
+      } else {
+        alert("Wrong password.");
+      }
+    });
+
+    $("btnStart").addEventListener("click", () => {
+      const sid = $("studentId").value.trim();
+      if (!sid) { alert("Please enter Student ID."); return; }
+      if (!quiz.length) { alert("Questions not loaded yet."); return; }
+      $("btnSubmit").disabled = false;
+      window.scrollTo({ top: $("quizArea").offsetTop - 8, behavior: "smooth" });
+    });
+
+    $("btnSubmit").addEventListener("click", async () => {
+      const sid = $("studentId").value.trim();
+      if (!sid) { alert("Please enter Student ID."); return; }
+      if (!quiz.length) { alert("Questions not loaded yet."); return; }
+      if (!allAnswered()) { alert("Please answer all questions before submitting."); return; }
+
+      const correct = gradeAndMark();
+      const total = quiz.length;
+
+      const answers = quiz.map((q, i) => {
+        const picked = parseInt(document.querySelector(`input[name="q${i}"]:checked`).value, 10);
+        return { i: i+1, picked, correct: q.answer, ok: picked === q.answer };
+      });
+
+      const payload = {
+        kind: "me211_quiz_v1",
+        lecture: LECTURE,
+        student_id: sid,
+        score: correct,
+        total,
+        submitted_at: new Date().toISOString(),
+        answers
+      };
+
+      $("saveStatus").textContent = `Saving to Results/${LECTURE} + Gradebook + Stats…`;
+
+      try {
+        await saveToSheet(payload);
+        $("saveStatus").textContent = `Saved ✅ (Results/${LECTURE} updated)`;
+      } catch (e) {
+        $("saveStatus").textContent = "Save failed: " + (e?.message || "unknown");
+      }
+
+      lockInputs();
+
+      $("summaryCard").classList.remove("hidden");
+      $("summaryLine").textContent = `Student ID: ${sid} · Total questions: ${total}`;
+      $("scoreLine").textContent = `${correct} / ${total}`;
+
+      revealTeacherDetails();
+      window.scrollTo({ top: $("summaryCard").offsetTop - 8, behavior: "smooth" });
+    });
+
+    loadQuestions();
+  </script>
+</body>
+</html>
