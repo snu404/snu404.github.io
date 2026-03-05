@@ -41,6 +41,18 @@
     .teacher { border: 1px dashed #b7bdff; background: #fbfbff; }
     .linkbtn { text-decoration:none; display:inline-flex; align-items:center; gap:8px; }
     .pill { padding:6px 10px; border-radius:999px; background:#eef0ff; color:#2431a5; font-size:12px; font-weight:800; }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .actions button{
+      white-space:nowrap;
+    }
+  
   </style>
 </head>
 
@@ -64,15 +76,13 @@
           <div class="muted">Student ID (required)</div>
           <input id="studentId" type="text" placeholder="e.g., 20261234" autocomplete="off" />
         </div>
-        <div>
-          <button class="secondary" id="btnTeacher">Teacher Mode</button>
-        </div>
-        <div>
-          <button class="secondary" id="btnStart">Start</button>
-        </div>
-        <div>
-          <button class="primary" id="btnSubmit" disabled>Submit</button>
-        </div>
+        
+      <div class="actions">
+        <button class="secondary" id="btnTeacher">Teacher Mode</button>
+        <button class="secondary" id="btnStart">Start</button>
+        <button class="primary" id="btnSubmit" disabled>Submit</button>
+      </div>
+        
       </div>
       <div class="divider"></div>
       <div class="muted small" id="loadStatus">Loading questions…</div>
