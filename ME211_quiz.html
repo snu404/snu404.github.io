@@ -21,8 +21,6 @@
 
     main { max-width: 860px; margin: 0 auto; padding: 16px; }
     .card { background:#fff; border-radius: 14px; padding: 14px; box-shadow: 0 8px 22px rgba(0,0,0,.08); margin-bottom: 12px; }
-    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .grow { flex:1; min-width: 220px; }
     .muted { color:#586174; font-size: 13px; }
     .small { font-size:12px; }
     input[type="text"]{ width:100%; padding:10px 12px; border:1px solid #d9dbe7; border-radius: 10px; font-size: 14px; }
@@ -42,17 +40,38 @@
     .linkbtn { text-decoration:none; display:inline-flex; align-items:center; gap:8px; }
     .pill { padding:6px 10px; border-radius:999px; background:#eef0ff; color:#2431a5; font-size:12px; font-weight:800; }
 
-    .actions{
+    /* ✅ 핵심: row가 줄바꿈(wrap)되게 + 간격 */
+    .row{
       display:flex;
       gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
+      flex-wrap:wrap;          /* <-- 이게 없으면 좁을 때 겹칠 수 있음 */
+      align-items:flex-start;
     }
-
+    
+    /* ✅ 입력칸: 최소 폭을 보장하면서 남는 공간을 먹기 */
+    .grow{
+      flex: 1 1 360px;         /* <-- basis(기본폭) 지정 */
+      min-width: 260px;        /* <-- 너무 좁아지면 아래로 내려가게 */
+    }
+    
+    /* ✅ 버튼 묶음: 내용만큼만 차지 + 최소 폭 */
+    .actions{
+      flex: 0 0 auto;          /* <-- grow에 침범하지 않게 */
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      min-width: 220px;
+    }
+    
     .actions button{
       white-space:nowrap;
     }
-  
+    
+    /* ✅ 아주 좁은 화면: 버튼을 100%로 아래로 */
+    @media (max-width: 720px){
+      .actions{ width:100%; }
+      .actions button{ width:100%; }
+    }
   </style>
 </head>
 
