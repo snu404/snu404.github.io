@@ -10,39 +10,37 @@
     header{
       background:#fff; border-bottom:1px solid #e5e7f2;
       padding:12px 16px; display:flex; align-items:center; justify-content:space-between;
-      gap:12px;
+      gap: 12px;
     }
-    .header-left{ display:flex; align-items:center; gap:16px; min-width:0; }
+    .header-left{ display:flex; align-items:center; gap:16px; min-width: 0; }
     .logo{ height:44px; }
     .titlewrap{ min-width:0; }
     .titlewrap h1{ margin:0; font-size:18px; font-weight:800; line-height:1.15; }
     .titlewrap .sub{ margin-top:6px; font-size:12px; color:#586174; }
     .qr{ width:74px; height:74px; border-radius:10px; border:1px solid #eef0f7; background:#fff; }
 
-    main { max-width:860px; margin:0 auto; padding:16px; }
-    .card { background:#fff; border-radius:14px; padding:14px; box-shadow:0 8px 22px rgba(0,0,0,.08); margin-bottom:12px; }
-    .muted { color:#586174; font-size:13px; }
+    main { max-width: 860px; margin: 0 auto; padding: 16px; }
+    .card { background:#fff; border-radius: 14px; padding: 14px; box-shadow: 0 8px 22px rgba(0,0,0,.08); margin-bottom: 12px; }
+    .muted { color:#586174; font-size: 13px; }
     .small { font-size:12px; }
-    input[type="text"]{
-      width:100%; padding:10px 12px; border:1px solid #d9dbe7; border-radius:10px;
-      font-size:14px; box-sizing:border-box;
-    }
+    input[type="text"]{ width:100%; padding:10px 12px; border:1px solid #d9dbe7; border-radius: 10px; font-size: 14px; box-sizing:border-box; }
     button { border:0; border-radius:10px; padding:10px 12px; font-weight:800; cursor:pointer; }
     button.primary{ background:#111; color:#fff; }
     button.secondary{ background:#e9ebf5; color:#111; }
     button:disabled{ opacity:.5; cursor:not-allowed; }
     .divider{ height:1px; background:#eef0f7; margin:12px 0; }
 
-    .qtitle { font-weight:900; margin-bottom:10px; }
-    .opt { display:block; padding:10px 10px; border:1px solid #dde0ee; border-radius:10px; margin-bottom:8px; cursor:pointer; }
-    .opt input { margin-right:8px; }
+    .qtitle { font-weight: 900; margin-bottom: 10px; }
+    .opt { display:block; padding: 10px 10px; border: 1px solid #dde0ee; border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
+    .opt input { margin-right: 8px; }
     .qimg{ max-width:100%; border-radius:12px; margin:10px 0; border:1px solid #eef0f7; }
 
     .hidden { display:none !important; }
-    .teacher { border:1px dashed #b7bdff; background:#fbfbff; }
+    .teacher { border: 1px dashed #b7bdff; background: #fbfbff; }
     .linkbtn { text-decoration:none; display:inline-flex; align-items:center; gap:8px; }
     .pill { padding:6px 10px; border-radius:999px; background:#eef0ff; color:#2431a5; font-size:12px; font-weight:800; }
 
+    /* ✅ row wrap to prevent overlap */
     .row{
       display:flex;
       gap:10px;
@@ -50,15 +48,15 @@
       align-items:flex-start;
     }
     .grow{
-      flex:1 1 360px;
-      min-width:260px;
+      flex: 1 1 360px;
+      min-width: 260px;
     }
     .actions{
-      flex:0 0 auto;
+      flex: 0 0 auto;
       display:flex;
       gap:10px;
       flex-wrap:wrap;
-      min-width:220px;
+      min-width: 220px;
     }
     .actions button{ white-space:nowrap; }
 
@@ -71,6 +69,23 @@
     table.stats th, table.stats td { border-bottom:1px solid #eef0f7; padding:8px 6px; text-align:right; }
     table.stats th:first-child, table.stats td:first-child { text-align:left; }
     .bad { font-weight:900; }
+
+    /* ===== Charts ===== */
+    .chartCard{ background:#fff; border:1px solid #eef0f7; border-radius:12px; padding:12px; margin-top:10px; }
+    canvas.statsChart{ width:100%; height:260px; }
+    .legend { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; font-size:12px; color:#586174; }
+    .chip{ display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; background:#f2f4ff; }
+    .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+
+    select{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid #d9dbe7;
+      border-radius:10px;
+      font-weight:800;
+      background:#fff;
+      box-sizing:border-box;
+    }
   </style>
 </head>
 
@@ -80,8 +95,8 @@
       <img class="logo" src="KAIST_logo.jpg" alt="KAIST logo" />
       <div class="titlewrap">
         <h1 id="title">ME211 Quiz</h1>
-        <div class="sub"><span class="pill" id="lecturePill"></span></div>
-        <div class="sub" id="subtitle">Enter Student ID → Start → Submit. Teacher Mode shows answers, explanations, and stats.</div>
+         <div class="sub"><span class="pill" id="lecturePill"></span></div>
+        <div class="sub" id="subtitle">Enter Student ID → Start → Submit. Teacher Mode shows answers, explanations, stats & charts.</div>
       </div>
     </div>
     <img id="qrImg" class="qr" alt="QR code" />
@@ -101,7 +116,6 @@
           <button class="primary" id="btnSubmit" type="button" disabled>Submit</button>
         </div>
       </div>
-
       <div class="divider"></div>
       <div class="muted small" id="loadStatus">Loading questions…</div>
       <div class="muted small" id="saveStatus">Not submitted yet.</div>
@@ -110,13 +124,30 @@
     <div class="card teacher hidden" id="teacherCard">
       <div class="qtitle">Teacher Mode</div>
       <div class="muted" style="margin-bottom:10px;">
-        Correct answers & explanations are visible immediately in Teacher Mode. Post-quiz statistics and sheet links are also shown below.
+        Correct answers & explanations are visible immediately in Teacher Mode.
       </div>
 
       <div class="divider"></div>
       <div class="qtitle">Post-Quiz Statistics</div>
+
+      <!-- Chart selector -->
+      <div class="row" style="margin:10px 0 6px 0;">
+        <div class="grow" style="min-width:220px; flex:1 1 220px;">
+          <div class="muted small">Chart</div>
+          <select id="chartSelect">
+            <option value="wrong">1) Wrong Rate by Question</option>
+            <option value="pick">2) Answer Choice Distribution (Pick0–Pick3)</option>
+            <option value="score">3) Score Distribution (Histogram)</option>
+          </select>
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+          <button class="secondary" id="btnRefreshCharts" type="button">Refresh</button>
+        </div>
+      </div>
+
       <div class="muted small" id="statsStatus">Statistics will appear here.</div>
       <div id="statsTableWrap"></div>
+      <div id="statsChartWrap" style="margin-top:10px;"></div>
 
       <div class="divider"></div>
       <div class="row">
@@ -152,11 +183,18 @@
     // =========================
     const DEFAULT_LECTURE = "Lecture 3";
     const TEACHER_PASSWORD = "1730";
+
+    // ✅ Apps Script Web App URL
     const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzZljM3azXE-1C_DeUG4uICGeuk8WlbDpFxhnMnPNTtI2VIwOcYJOvGYtnhCKQgQlZ2Nw/exec";
+
     const JSONP_CALLBACK = "initQuizFromServer";
 
     let TEACHER_MODE = false;
     let quiz = [];
+
+    // caches for charts
+    let _statsCache = null;   // [{q, attempts, correct, incorrect, correctRate, wrongRate, pick0..3}]
+    let _scoresCache = null;  // [{score,total}]
 
     const $ = (id) => document.getElementById(id);
 
@@ -165,12 +203,12 @@
       const raw = (p.get("lecture") || "").trim();
       return raw || DEFAULT_LECTURE;
     }
-
     const LECTURE = getLectureFromUrl();
 
     $("lecturePill").textContent = LECTURE;
     document.title = `ME211 Quiz - ${LECTURE}`;
 
+    // QR code points to current URL (with lecture param)
     (function initQR(){
       const url = location.href;
       $("qrImg").src = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" + encodeURIComponent(url);
@@ -183,6 +221,7 @@
         .replaceAll("'","&#039;");
     }
 
+    // JSONP helper (for GET endpoints to avoid CORS)
     function jsonp(url){
       return new Promise((resolve, reject) => {
         const cb = "cb_" + Math.random().toString(36).slice(2);
@@ -205,7 +244,7 @@
     }
 
     // =========================
-    // Questions load
+    // Load Questions (JSONP)
     // =========================
     function loadQuestions() {
       if (!WEBAPP_URL || WEBAPP_URL.includes("PUT_YOUR_WEBAPP_URL_HERE")) {
@@ -228,6 +267,11 @@
       quiz = payload.quiz || [];
       $("loadStatus").textContent = `Loaded ${quiz.length} questions from Questions/${LECTURE}.`;
       renderQuiz();
+
+      // If teacher already enabled, reveal immediately when questions arrive
+      if (TEACHER_MODE) {
+        revealTeacherAnswers();
+      }
     }
     window[JSONP_CALLBACK] = initQuizFromServer;
 
@@ -280,7 +324,7 @@
     }
 
     function allAnswered(){
-      for (let i = 0; i < quiz.length; i++){
+      for (let i=0;i<quiz.length;i++){
         if (!document.querySelector(`input[name="q${i}"]:checked`)) return false;
       }
       return true;
@@ -295,7 +339,7 @@
 
     function gradeAndMark(){
       let correct = 0;
-      for (let i = 0; i < quiz.length; i++){
+      for (let i=0;i<quiz.length;i++){
         const checked = document.querySelector(`input[name="q${i}"]:checked`);
         const picked = checked ? parseInt(checked.value, 10) : -1;
 
@@ -319,6 +363,7 @@
     }
 
     async function saveToSheet(payload){
+      // POST is no-cors (no response readable) but write happens
       await fetch(WEBAPP_URL, {
         method: "POST",
         mode: "no-cors",
@@ -329,18 +374,17 @@
 
     function pct(x){
       if (!isFinite(x)) return "-";
-      return (x * 100).toFixed(1) + "%";
+      return (x*100).toFixed(1) + "%";
     }
 
     // =========================
-    // Teacher Mode helpers
+    // Teacher links & stats (JSONP GET)
     // =========================
     async function loadTeacherLinks(){
       try{
         $("teacherLinksStatus").textContent = "Loading links…";
         const url = `${WEBAPP_URL}?action=links&lecture=${encodeURIComponent(LECTURE)}`;
         const data = await jsonp(url);
-
         if (!data.ok) throw new Error(data.message || "links not ok");
 
         $("btnOpenResults").href = data.resultsUrl;
@@ -348,22 +392,23 @@
         $("btnOpenStats").href = data.resultsUrl;
 
         $("teacherLinksStatus").textContent =
-          `Tabs: Gradebook, ${data.statsTab || ("Stats - " + LECTURE)}, and ${LECTURE} (results log).`;
+          `Tabs: Gradebook, ${data.statsTab || ("Stats - "+LECTURE)}, and ${LECTURE} (results log).`;
       } catch(e){
         $("teacherLinksStatus").textContent =
           "Link load failed: " + (e?.message || "unknown");
       }
     }
 
-    async function loadStatsAndRender(){
+    async function loadStatsAndRenderTable(){
       try{
         $("statsStatus").textContent = "Loading stats…";
         const url = `${WEBAPP_URL}?action=stats&lecture=${encodeURIComponent(LECTURE)}`;
         const data = await jsonp(url);
-
         if (!data.ok) throw new Error(data.message || "stats not ok");
 
         const rows = data.rows || [];
+        _statsCache = rows;
+
         if (!rows.length) {
           $("statsStatus").textContent = "No submissions yet. (0 attempts)";
           $("statsTableWrap").innerHTML = "";
@@ -371,10 +416,11 @@
           return;
         }
 
+        // Top wrong Qs
         const topWrong = [...rows]
-          .filter(r => (r.attempts || 0) > 0)
-          .sort((a, b) => (b.wrongRate || 0) - (a.wrongRate || 0))
-          .slice(0, 3);
+          .filter(r => (r.attempts||0) > 0)
+          .sort((a,b) => (b.wrongRate||0) - (a.wrongRate||0))
+          .slice(0,3);
 
         let html = "";
         html += `<div class="muted small">Top wrong questions: ` +
@@ -387,19 +433,16 @@
           <th>Pick0</th><th>Pick1</th><th>Pick2</th><th>Pick3</th>
         </tr></thead><tbody>`;
 
-        rows.forEach(r => {
-          const wrongHigh = (r.wrongRate || 0) >= 0.5 && (r.attempts || 0) >= 5;
+        rows.forEach(r=>{
+          const wrongHigh = (r.wrongRate||0) >= 0.5 && (r.attempts||0) >= 5;
           html += `<tr>
             <td>${wrongHigh ? `<span class="bad">Q${r.q}</span>` : `Q${r.q}`}</td>
-            <td>${r.attempts || 0}</td>
-            <td>${r.correct || 0}</td>
-            <td>${r.incorrect || 0}</td>
-            <td>${pct(r.correctRate || 0)}</td>
-            <td>${pct(r.wrongRate || 0)}</td>
-            <td>${r.pick0 || 0}</td>
-            <td>${r.pick1 || 0}</td>
-            <td>${r.pick2 || 0}</td>
-            <td>${r.pick3 || 0}</td>
+            <td>${r.attempts||0}</td>
+            <td>${r.correct||0}</td>
+            <td>${r.incorrect||0}</td>
+            <td>${pct(r.correctRate||0)}</td>
+            <td>${pct(r.wrongRate||0)}</td>
+            <td>${r.pick0||0}</td><td>${r.pick1||0}</td><td>${r.pick2||0}</td><td>${r.pick3||0}</td>
           </tr>`;
         });
 
@@ -408,6 +451,7 @@
         $("statsTableWrap").innerHTML = html;
         $("statsTableWrap").classList.remove("hidden");
         $("statsStatus").textContent = `Loaded: ${data.sheet}`;
+
       } catch(e){
         $("statsStatus").textContent = "Stats load failed: " + (e?.message || "unknown");
         $("statsTableWrap").innerHTML = "";
@@ -415,18 +459,319 @@
       }
     }
 
-    function showTeacherPanel(){
-      $("teacherCard").classList.remove("hidden");
-      loadTeacherLinks();
-      loadStatsAndRender();
+    // For charts: stats only
+    async function loadStatsOnly(){
+      const url = `${WEBAPP_URL}?action=stats&lecture=${encodeURIComponent(LECTURE)}`;
+      const data = await jsonp(url);
+      if (!data.ok) throw new Error(data.message || "stats not ok");
+      _statsCache = data.rows || [];
+      return _statsCache;
     }
 
+    // For histogram: scores list
+    // Requires Code.gs to support: action=scores
+    async function loadScoresOnly(){
+      try{
+        const url = `${WEBAPP_URL}?action=scores&lecture=${encodeURIComponent(LECTURE)}`;
+        const data = await jsonp(url);
+        if (!data.ok) throw new Error(data.message || "scores not ok");
+        _scoresCache = (data.scores || [])
+          .map(x => ({ score: Number(x.score), total: Number(x.total) }))
+          .filter(x => isFinite(x.score) && isFinite(x.total) && x.total > 0);
+        return _scoresCache;
+      }catch(e){
+        _scoresCache = [];
+        return [];
+      }
+    }
+
+    // =========================
+    // Teacher: reveal
+    // =========================
     function revealTeacherAnswers(){
       document.querySelectorAll(".teacher-only").forEach(el => el.classList.remove("hidden"));
     }
 
+    function showTeacherPanel(){
+      $("teacherCard").classList.remove("hidden");
+      loadTeacherLinks();
+      // show answers immediately (even without submit)
+      revealTeacherAnswers();
+      // table + charts
+      loadStatsAndRenderTable();
+      teacherInitCharts();
+    }
+
     // =========================
-    // Events
+    // Charts: selector-based UI
+    // =========================
+    function showChartUI(mode){
+      const wrap = $("statsChartWrap");
+      if (!wrap) return;
+
+      if (mode === "wrong") {
+        wrap.innerHTML = `
+          <div class="chartCard">
+            <div class="qtitle" style="margin:0 0 8px 0;">Wrong Rate by Question</div>
+            <canvas id="wrongChart" class="statsChart" width="900" height="300"></canvas>
+            <div class="muted small" style="margin-top:6px;">Bars = wrong rate (0–100%).</div>
+          </div>`;
+        drawWrongRateBarChart($("wrongChart"), _statsCache || []);
+        return;
+      }
+
+      if (mode === "pick") {
+        wrap.innerHTML = `
+          <div class="chartCard">
+            <div class="qtitle" style="margin:0 0 8px 0;">Answer Choice Distribution (Pick0–Pick3)</div>
+            <canvas id="pickChart" class="statsChart" width="900" height="300"></canvas>
+            <div class="legend">
+              <span class="chip"><span class="dot" style="background:#4f7cff"></span>Pick0</span>
+              <span class="chip"><span class="dot" style="background:#22a06b"></span>Pick1</span>
+              <span class="chip"><span class="dot" style="background:#f5a524"></span>Pick2</span>
+              <span class="chip"><span class="dot" style="background:#e24d4d"></span>Pick3</span>
+            </div>
+          </div>`;
+        drawPickStackChart($("pickChart"), _statsCache || []);
+        return;
+      }
+
+      // score histogram
+      wrap.innerHTML = `
+        <div class="chartCard">
+          <div class="qtitle" style="margin:0 0 8px 0;">Score Distribution (Histogram)</div>
+          <canvas id="scoreChart" class="statsChart" width="900" height="300"></canvas>
+          <div class="muted small" id="scoreChartNote" style="margin-top:6px;"></div>
+        </div>`;
+
+      if (!_scoresCache || !_scoresCache.length) {
+        $("scoreChartNote").textContent = "No score data yet (need submissions) OR Code.gs action=scores not deployed.";
+        return;
+      }
+      drawScoreHistogram($("scoreChart"), _scoresCache);
+    }
+
+    async function refreshCharts(){
+      await loadStatsOnly();
+      await loadScoresOnly();
+      const mode = $("chartSelect")?.value || "wrong";
+      showChartUI(mode);
+    }
+
+    async function teacherInitCharts(){
+      await refreshCharts();
+    }
+
+    $("chartSelect")?.addEventListener("change", () => {
+      const mode = $("chartSelect").value;
+      showChartUI(mode);
+    });
+
+    $("btnRefreshCharts")?.addEventListener("click", async () => {
+      await refreshCharts();
+    });
+
+    // =========================
+    // Chart draw functions (Canvas)
+    // =========================
+    function drawWrongRateBarChart(canvas, rows){
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0,0,W,H);
+
+      const padL=52, padR=16, padT=16, padB=44;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      // axes
+      ctx.strokeStyle = "#dfe3f3";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padL, padT);
+      ctx.lineTo(padL, padT+plotH);
+      ctx.lineTo(padL+plotW, padT+plotH);
+      ctx.stroke();
+
+      // y grid 0..100%
+      ctx.fillStyle = "#586174";
+      ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      [0,25,50,75,100].forEach(v=>{
+        const y = padT + plotH - (v/100)*plotH;
+        ctx.strokeStyle = "#eef0f7";
+        ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL+plotW, y); ctx.stroke();
+        ctx.fillText(v+"%", 10, y+4);
+      });
+
+      const n = rows.length || 1;
+      const gap = Math.max(6, plotW/(n*10));
+      const barW = (plotW - gap*(n+1))/n;
+
+      (rows || []).forEach((r, i)=>{
+        const wr = Math.max(0, Math.min(1, Number(r.wrongRate || 0)));
+        const x = padL + gap + i*(barW+gap);
+        const h = wr * plotH;
+        const y = padT + plotH - h;
+
+        ctx.fillStyle = "#4f7cff";
+        ctx.fillRect(x, y, barW, h);
+
+        // Q label
+        ctx.fillStyle = "#111";
+        ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+        const label = "Q"+(r.q ?? (i+1));
+        const tx = x + barW/2 - ctx.measureText(label).width/2;
+        ctx.fillText(label, tx, padT + plotH + 28);
+
+        if ((r.attempts||0) > 0){
+          const v = Math.round(wr*100) + "%";
+          const vx = x + barW/2 - ctx.measureText(v).width/2;
+          ctx.fillText(v, vx, Math.max(padT+12, y-6));
+        }
+      });
+
+      if (!rows || !rows.length){
+        ctx.fillStyle="#586174";
+        ctx.font="14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+        ctx.fillText("No stats yet.", padL+10, padT+30);
+      }
+    }
+
+    function drawPickStackChart(canvas, rows){
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0,0,W,H);
+
+      const padL=52, padR=16, padT=16, padB=44;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      ctx.strokeStyle="#dfe3f3";
+      ctx.beginPath();
+      ctx.moveTo(padL,padT);
+      ctx.lineTo(padL,padT+plotH);
+      ctx.lineTo(padL+plotW,padT+plotH);
+      ctx.stroke();
+
+      ctx.fillStyle="#586174";
+      ctx.font="12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      [0,25,50,75,100].forEach(v=>{
+        const y = padT + plotH - (v/100)*plotH;
+        ctx.strokeStyle = "#eef0f7";
+        ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL+plotW, y); ctx.stroke();
+        ctx.fillText(v+"%", 10, y+4);
+      });
+
+      const colors = ["#4f7cff","#22a06b","#f5a524","#e24d4d"];
+      const n = rows.length || 1;
+      const gap = Math.max(6, plotW/(n*10));
+      const barW = (plotW - gap*(n+1))/n;
+
+      (rows || []).forEach((r, i)=>{
+        const a = Number(r.attempts||0);
+        const picks = [Number(r.pick0||0), Number(r.pick1||0), Number(r.pick2||0), Number(r.pick3||0)];
+        const sum = picks.reduce((s,x)=>s+x,0);
+
+        const denom = a>0 ? a : (sum>0 ? sum : 1);
+        const fracs = picks.map(p=>p/denom);
+
+        const x = padL + gap + i*(barW+gap);
+        let yTop = padT + plotH;
+
+        fracs.forEach((f, k)=>{
+          const h = f * plotH;
+          yTop -= h;
+          ctx.fillStyle = colors[k];
+          ctx.fillRect(x, yTop, barW, h);
+        });
+
+        ctx.fillStyle="#111";
+        ctx.font="12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+        const label = "Q"+(r.q ?? (i+1));
+        const tx = x + barW/2 - ctx.measureText(label).width/2;
+        ctx.fillText(label, tx, padT + plotH + 28);
+      });
+
+      if (!rows || !rows.length){
+        ctx.fillStyle="#586174";
+        ctx.font="14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+        ctx.fillText("No stats yet.", padL+10, padT+30);
+      }
+    }
+
+    function drawScoreHistogram(canvas, scores){
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0,0,W,H);
+
+      const padL=52, padR=16, padT=16, padB=44;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      // normalize to percent
+      const perc = (scores || [])
+        .map(x => x.total ? (x.score / x.total) : 0)
+        .filter(x => isFinite(x));
+
+      const n = perc.length;
+
+      const bins = new Array(10).fill(0); // 0-10..90-100
+      perc.forEach(p=>{
+        const v = Math.max(0, Math.min(0.999999, p));
+        const b = Math.floor(v*10);
+        bins[b] += 1;
+      });
+
+      const maxCnt = Math.max(1, ...bins);
+
+      ctx.strokeStyle="#dfe3f3";
+      ctx.beginPath();
+      ctx.moveTo(padL,padT);
+      ctx.lineTo(padL,padT+plotH);
+      ctx.lineTo(padL+plotW,padT+plotH);
+      ctx.stroke();
+
+      ctx.fillStyle="#586174";
+      ctx.font="12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      const yTicks = 4;
+      for(let t=0;t<=yTicks;t++){
+        const v = Math.round((maxCnt*t)/yTicks);
+        const y = padT + plotH - (v/maxCnt)*plotH;
+        ctx.strokeStyle="#eef0f7";
+        ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+plotW,y); ctx.stroke();
+        ctx.fillText(String(v), 10, y+4);
+      }
+
+      const gap = 8;
+      const barW = (plotW - gap*(bins.length+1))/bins.length;
+
+      bins.forEach((cnt,i)=>{
+        const x = padL + gap + i*(barW+gap);
+        const h = (cnt/maxCnt)*plotH;
+        const y = padT + plotH - h;
+
+        ctx.fillStyle="#111";
+        ctx.globalAlpha=0.10;
+        ctx.fillRect(x,y,barW,h);
+        ctx.globalAlpha=1;
+
+        ctx.fillStyle="#111";
+        const label = `${i*10}-${(i+1)*10}`;
+        const tx = x + barW/2 - ctx.measureText(label).width/2;
+        ctx.fillText(label, tx, padT + plotH + 28);
+
+        const vtx = x + barW/2 - ctx.measureText(String(cnt)).width/2;
+        ctx.fillText(String(cnt), vtx, Math.max(padT+12, y-6));
+      });
+
+      const note = $("scoreChartNote");
+      if (note) note.textContent = `N=${n} submissions. Bins are 10%-wide by score/total.`;
+    }
+
+    // =========================
+    // Teacher: events
     // =========================
     $("btnTeacher").addEventListener("click", () => {
       const pw = prompt("Teacher password:");
@@ -434,7 +779,6 @@
         TEACHER_MODE = true;
         alert("Teacher Mode enabled.");
         showTeacherPanel();
-        revealTeacherAnswers(); // ✅ 비번 입력 즉시 정답/해설 표시
       } else {
         alert("Wrong password.");
       }
@@ -459,7 +803,7 @@
 
       const answers = quiz.map((q, i) => {
         const picked = parseInt(document.querySelector(`input[name="q${i}"]:checked`).value, 10);
-        return { i: i + 1, picked, correct: q.answer, ok: picked === q.answer };
+        return { i: i+1, picked, correct: q.answer, ok: picked === q.answer };
       });
 
       const payload = {
@@ -487,12 +831,19 @@
       $("summaryLine").textContent = `Student ID: ${sid} · Total questions: ${total}`;
       $("scoreLine").textContent = `${correct} / ${total}`;
 
-      if (TEACHER_MODE) {
-        showTeacherPanel();
-        revealTeacherAnswers();
-      }
+      if (TEACHER_MODE) showTeacherPanel();
 
       window.scrollTo({ top: $("summaryCard").offsetTop - 8, behavior: "smooth" });
+    });
+
+    // Chart selector actions
+    $("chartSelect")?.addEventListener("change", () => {
+      const mode = $("chartSelect").value;
+      showChartUI(mode);
+    });
+
+    $("btnRefreshCharts")?.addEventListener("click", async () => {
+      await refreshCharts();
     });
 
     // =========================
