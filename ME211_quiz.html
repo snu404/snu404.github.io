@@ -10,67 +10,69 @@
     header{
       background:#fff; border-bottom:1px solid #e5e7f2;
       padding:12px 16px; display:flex; align-items:center; justify-content:space-between;
-      gap: 12px;
+      gap:12px;
     }
-    .header-left{ display:flex; align-items:center; gap:16px; min-width: 0; }
+    .header-left{ display:flex; align-items:center; gap:16px; min-width:0; }
     .logo{ height:44px; }
     .titlewrap{ min-width:0; }
     .titlewrap h1{ margin:0; font-size:18px; font-weight:800; line-height:1.15; }
     .titlewrap .sub{ margin-top:6px; font-size:12px; color:#586174; }
     .qr{ width:74px; height:74px; border-radius:10px; border:1px solid #eef0f7; background:#fff; }
 
-    main { max-width: 980px; margin: 0 auto; padding: 16px; }
-    .card { background:#fff; border-radius: 14px; padding: 14px; box-shadow: 0 8px 22px rgba(0,0,0,.08); margin-bottom: 12px; }
-    .muted { color:#586174; font-size: 13px; }
+    main { max-width:980px; margin:0 auto; padding:16px; }
+    .card { background:#fff; border-radius:14px; padding:14px; box-shadow:0 8px 22px rgba(0,0,0,.08); margin-bottom:12px; }
+    .muted { color:#586174; font-size:13px; }
     .small { font-size:12px; }
-    input[type="text"]{ width:100%; padding:10px 12px; border:1px solid #d9dbe7; border-radius: 10px; font-size: 14px; box-sizing:border-box; }
+    input[type="text"]{
+      width:100%; padding:10px 12px; border:1px solid #d9dbe7; border-radius:10px;
+      font-size:14px; box-sizing:border-box;
+    }
     button { border:0; border-radius:10px; padding:10px 12px; font-weight:800; cursor:pointer; }
     button.primary{ background:#111; color:#fff; }
     button.secondary{ background:#e9ebf5; color:#111; }
     button:disabled{ opacity:.5; cursor:not-allowed; }
     .divider{ height:1px; background:#eef0f7; margin:12px 0; }
 
-    .qtitle { font-weight: 900; margin-bottom: 10px; }
-    .opt { display:block; padding: 10px 10px; border: 1px solid #dde0ee; border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
-    .opt input { margin-right: 8px; }
+    .qtitle { font-weight:900; margin-bottom:10px; }
+    .opt { display:block; padding:10px 10px; border:1px solid #dde0ee; border-radius:10px; margin-bottom:8px; cursor:pointer; }
+    .opt input { margin-right:8px; }
     .qimg{ max-width:100%; border-radius:12px; margin:10px 0; border:1px solid #eef0f7; }
 
     .hidden { display:none !important; }
-    .teacher { border: 1px dashed #b7bdff; background: #fbfbff; }
+    .teacher { border:1px dashed #b7bdff; background:#fbfbff; }
     .linkbtn { text-decoration:none; display:inline-flex; align-items:center; gap:8px; }
     .pill { padding:6px 10px; border-radius:999px; background:#eef0ff; color:#2431a5; font-size:12px; font-weight:800; }
 
     .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start; }
-    .grow{ flex: 1 1 360px; min-width: 260px; }
-    .actions{ flex: 0 0 auto; display:flex; gap:10px; flex-wrap:wrap; min-width: 220px; }
+    .grow{ flex:1 1 360px; min-width:260px; }
+    .actions{ flex:0 0 auto; display:flex; gap:10px; flex-wrap:wrap; min-width:220px; }
     .actions button{ white-space:nowrap; }
     @media (max-width: 720px){
       .actions{ width:100%; }
       .actions button{ width:100%; }
     }
 
-    table.stats { width:100%; border-collapse:collapse; font-size:13px; margin-top:10px; }
-    table.stats th, table.stats td { border-bottom:1px solid #eef0f7; padding:8px 6px; text-align:right; }
-    table.stats th:first-child, table.stats td:first-child { text-align:left; }
-    .bad { font-weight:900; }
-
-    /* ===== Charts UI ===== */
-    .seg { display:flex; gap:10px; flex-wrap:wrap; margin: 6px 0 12px; }
+    .seg { display:flex; gap:10px; flex-wrap:wrap; margin:10px 0 12px; }
     .seg button{
       border-radius:999px; padding:10px 14px;
       background:#e9ebf5; color:#1b4f9a;
       font-weight:900;
     }
     .seg button.active{ background:#111; color:#fff; }
+
     .chartWrap{
-      border:1px solid #eef0f7; border-radius:16px; padding:12px;
-      background:#fff; overflow:hidden;
+      border:1px solid #eef0f7;
+      border-radius:16px;
+      padding:12px;
+      background:#fff;
+      overflow:hidden;
     }
-    .chartCaption{ margin-top:10px; color:#586174; font-size:12px; }
     canvas{ width:100%; height:360px; display:block; }
-    @media (max-width: 720px){
-      canvas{ height:300px; }
-    }
+    .chartCaption{ margin-top:10px; color:#586174; font-size:12px; }
+
+    table.stats { width:100%; border-collapse:collapse; font-size:13px; margin-top:10px; }
+    table.stats th, table.stats td { border-bottom:1px solid #eef0f7; padding:8px 6px; text-align:right; }
+    table.stats th:first-child, table.stats td:first-child { text-align:left; }
   </style>
 </head>
 
@@ -81,7 +83,7 @@
       <div class="titlewrap">
         <h1 id="title">ME211 Quiz</h1>
         <div class="sub"><span class="pill" id="lecturePill"></span></div>
-        <div class="sub" id="subtitle">Enter Student ID → Start → Answer → Submit. Teacher Mode shows answers & stats.</div>
+        <div class="sub" id="subtitle">Enter Student ID → Start → Answer all → Submit. Teacher Mode shows answers & stats.</div>
       </div>
     </div>
     <img id="qrImg" class="qr" alt="QR code" />
@@ -100,6 +102,7 @@
           <button class="primary" id="btnSubmit" type="button" disabled>Submit</button>
         </div>
       </div>
+
       <div class="divider"></div>
       <div class="muted small" id="loadStatus">Loading questions…</div>
       <div class="muted small" id="saveStatus">Not submitted yet.</div>
@@ -115,7 +118,7 @@
       <div class="qtitle">Statistics & Charts</div>
       <div class="muted small" id="statsStatus">Loading…</div>
 
-      <div class="seg" style="margin-top:10px;">
+      <div class="seg">
         <button type="button" id="tabWrong" class="active">1) Wrong rate (Top wrong)</button>
         <button type="button" id="tabPicks">2) Option picks (per question)</button>
         <button type="button" id="tabScore">3) Score distribution</button>
@@ -166,13 +169,20 @@
 
     // KAIST Blue
     const KAIST_BLUE = "#003B8E";
-    // option colors: strong distinguishable
-    const OPT_COLORS = ["#003B8E", "#00A0DF", "#6A00FF", "#00B894"]; // blue/cyan/purple/green
+
+    // Distinct option colors
+    const OPT_COLORS = [
+      "#003B8E", // Pick0
+      "#00A0DF", // Pick1
+      "#6A00FF", // Pick2
+      "#00B894"  // Pick3
+    ];
 
     let TEACHER_MODE = false;
     let quiz = [];
-    let statsRows = [];     // from action=stats
-    let scorePairs = [];    // from action=scores: [{score,total}, ...]
+    let statsRows = [];
+    let scorePairs = []; // [{score,total}, ...]
+
     let activeChart = "wrong"; // wrong | picks | score
 
     const $ = (id) => document.getElementById(id);
@@ -184,11 +194,9 @@
     }
     const LECTURE = getLectureFromUrl();
 
-    // Title
     $("lecturePill").textContent = LECTURE;
     document.title = `ME211 Quiz - ${LECTURE}`;
 
-    // QR code points to current URL (with lecture param)
     (function initQR(){
       const url = location.href;
       $("qrImg").src = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" + encodeURIComponent(url);
@@ -201,7 +209,9 @@
         .replaceAll("'","&#039;");
     }
 
-    // JSONP loader for questions
+    // =========================
+    // Questions (JSONP)
+    // =========================
     function loadQuestions() {
       const s = document.createElement("script");
       s.src = `${WEBAPP_URL}?lecture=${encodeURIComponent(LECTURE)}&callback=${encodeURIComponent(JSONP_CALLBACK)}`;
@@ -225,6 +235,7 @@
     function renderQuiz(){
       const area = $("quizArea");
       area.innerHTML = "";
+
       if (!quiz.length) {
         area.innerHTML = `<div class="card"><div class="muted">No questions loaded.</div></div>`;
         return;
@@ -310,7 +321,6 @@
     }
 
     async function saveToSheet(payload){
-      // no-cors: we can't read response; assume ok if network ok
       await fetch(WEBAPP_URL, {
         method: "POST",
         mode: "no-cors",
@@ -319,7 +329,9 @@
       });
     }
 
-    // ===== Teacher links =====
+    // =========================
+    // Teacher data
+    // =========================
     async function loadTeacherLinks(){
       try{
         $("teacherLinksStatus").textContent = "Loading links…";
@@ -339,7 +351,6 @@
       }
     }
 
-    // ===== Load Stats + Scores =====
     async function loadStats(){
       const url = `${WEBAPP_URL}?action=stats&lecture=${encodeURIComponent(LECTURE)}`;
       const res = await fetch(url, { method:"GET" });
@@ -355,14 +366,13 @@
       const data = await res.json();
       if (!data.ok) throw new Error(data.message || "scores not ok");
 
-      // Accept:
-      //  - data.scores = [2,9,4]
-      //  - data.scores = [{score:2,total:10}, ...]
       const s = data.scores || [];
-      if (!s.length) { scorePairs = []; return data; }
+      if (!s.length) {
+        scorePairs = [];
+        return data;
+      }
 
       if (typeof s[0] === "number") {
-        // convert to pairs using totalQuestions if provided; else infer max
         const total = Number(data.totalQuestions);
         const inferredTotal = Number.isFinite(total) ? total : Math.max(...s);
         scorePairs = s.map(x => ({ score:Number(x), total: inferredTotal }));
@@ -372,28 +382,47 @@
       return data;
     }
 
-    // ===== Canvas drawing utils =====
+    async function loadTeacherData(){
+      $("statsStatus").textContent = "Loading stats/scores…";
+      try{
+        await loadTeacherLinks();
+        await Promise.all([loadStats(), loadScores()]);
+        $("statsStatus").textContent = `Loaded stats/scores for ${LECTURE}.`;
+        renderChart();
+      } catch(e){
+        $("statsStatus").textContent = "Load failed: " + (e?.message || "unknown");
+      }
+    }
+
+    function revealTeacherUI(){
+      $("teacherCard").classList.remove("hidden");
+      document.querySelectorAll(".teacher-only").forEach(el => el.classList.remove("hidden"));
+      loadTeacherData();
+    }
+
+    // =========================
+    // Chart drawing utils
+    // =========================
     function getCanvasCtx(){
       const c = $("chart");
       const ctx = c.getContext("2d");
       const dpr = window.devicePixelRatio || 1;
 
-      // Keep internal resolution synced with CSS size
       const cssW = c.clientWidth || 800;
       const cssH = c.clientHeight || 360;
       c.width  = Math.floor(cssW * dpr);
       c.height = Math.floor(cssH * dpr);
+
       return { c, ctx, dpr, W:c.width, H:c.height };
     }
 
     function clearCanvas(ctx, W, H){
       ctx.clearRect(0,0,W,H);
-      // white background for printing clarity
       ctx.fillStyle = "#fff";
       ctx.fillRect(0,0,W,H);
     }
 
-    function text(ctx, str, x, y, size, color, align="left"){
+    function drawText(ctx, str, x, y, size, color, align="left"){
       ctx.fillStyle = color;
       ctx.font = `${size}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
       ctx.textAlign = align;
@@ -401,17 +430,19 @@
       ctx.fillText(str, x, y);
     }
 
-    // ===== Chart 1: Wrong rate (Top wrong) =====
     function pct(x){
       if (!isFinite(x)) return "-";
       return (x*100).toFixed(1) + "%";
     }
 
+    // =========================
+    // Chart 1: Wrong rate
+    // =========================
     function drawWrongRate(rows){
       const {ctx,dpr,W,H} = getCanvasCtx();
       clearCanvas(ctx,W,H);
 
-      const padL = 72*dpr, padR = 96*dpr, padT = 24*dpr, padB = 32*dpr; // padR larger (fix cut)
+      const padL = 72*dpr, padR = 110*dpr, padT = 24*dpr, padB = 32*dpr;
       const innerW = W - padL - padR;
       const innerH = H - padT - padB;
 
@@ -421,11 +452,10 @@
         .slice(0, 10);
 
       if (!data.length){
-        text(ctx, "No stats rows yet.", padL, padT + 24*dpr, 14*dpr, "#586174");
+        drawText(ctx, "No stats rows yet.", padL, padT + 24*dpr, 14*dpr, "#586174");
         return;
       }
 
-      // axis line
       ctx.strokeStyle = "#cfd4e6";
       ctx.lineWidth = 1*dpr;
       ctx.beginPath();
@@ -441,49 +471,55 @@
         const y = padT + i*(barH + barGap);
         const bw = innerW * Math.max(0, Math.min(1, r.wrongRate));
 
-        // bar
         ctx.fillStyle = KAIST_BLUE;
         ctx.fillRect(padL, y, bw, barH);
 
-        // label left (Q#)
-        text(ctx, "Q"+r.q, padL - 12*dpr, y + barH*0.78, 12*dpr, "#111", "right");
+        drawText(ctx, "Q"+r.q, padL - 12*dpr, y + barH*0.78, 12*dpr, "#111", "right");
 
-        // percent text (clamped to stay inside canvas)
+        // ✅ 100% label auto white inside bar if needed
         const label = pct(r.wrongRate);
         ctx.font = `${12*dpr}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
-        ctx.fillStyle = "#111";
+        const tw = ctx.measureText(label).width;
+
+        let tx = padL + bw + 8*dpr;
+        let color = "#111";
+
+        if (tx + tw > W - padR) {
+          tx = padL + bw - tw - 8*dpr;
+          color = "#fff";
+        }
+
+        tx = Math.max(padL + 6*dpr, tx);
+        ctx.fillStyle = color;
         ctx.textAlign = "left";
-        const idealX = padL + bw + 8*dpr;
-        const maxX = W - padR - 40*dpr;
-        const tx = Math.min(idealX, maxX);
         ctx.fillText(label, tx, y + barH*0.78);
       });
     }
 
-    // ===== Chart 2: Option picks (per question) =====
+    // =========================
+    // Chart 2: Option picks
+    // =========================
     function drawOptionPicks(rows){
       const {ctx,dpr,W,H} = getCanvasCtx();
       clearCanvas(ctx,W,H);
 
-      // More bottom padding to avoid label overlap
       const padL=48*dpr, padR=18*dpr, padT=24*dpr, padB=84*dpr;
       const innerW=W-padL-padR, innerH=H-padT-padB;
 
       const data = [...rows].sort((a,b)=> (a.q||0)-(b.q||0));
       if (!data.length){
-        text(ctx, "No stats rows yet.", padL, padT + 24*dpr, 14*dpr, "#586174");
+        drawText(ctx, "No stats rows yet.", padL, padT + 24*dpr, 14*dpr, "#586174");
         return;
       }
 
-      // compute max
       const maxPick = Math.max(1, ...data.map(r => Math.max(r.pick0||0,r.pick1||0,r.pick2||0,r.pick3||0)));
 
-      // axes
-      ctx.strokeStyle="#cfd4e6"; ctx.lineWidth=1*dpr;
+      ctx.strokeStyle="#cfd4e6";
+      ctx.lineWidth=1*dpr;
       ctx.beginPath();
-      ctx.moveTo(padL, padT);
-      ctx.lineTo(padL, padT+innerH);
-      ctx.lineTo(padL+innerW, padT+innerH);
+      ctx.moveTo(padL,padT);
+      ctx.lineTo(padL,padT+innerH);
+      ctx.lineTo(padL+innerW,padT+innerH);
       ctx.stroke();
 
       const groupW = innerW / data.length;
@@ -502,22 +538,23 @@
           ctx.fillRect(x, y, barW, h);
         });
 
-        // x-label (Q#) — positioned above caption space
-        text(ctx, "Q"+r.q, xCenter, padT+innerH+28*dpr, 12*dpr, "#111", "center");
+        drawText(ctx, "Q"+r.q, xCenter, padT+innerH+28*dpr, 12*dpr, "#111", "center");
       });
 
-      // legend (bottom area)
+      // legend
       const baseY = padT + innerH + 58*dpr;
       const legendX = padL;
       const labels = ["Pick0","Pick1","Pick2","Pick3"];
       labels.forEach((lab, i)=>{
         ctx.fillStyle = OPT_COLORS[i];
         ctx.fillRect(legendX + i*120*dpr, baseY-10*dpr, 14*dpr, 10*dpr);
-        text(ctx, lab, legendX + i*120*dpr + 20*dpr, baseY, 12*dpr, "#586174", "left");
+        drawText(ctx, lab, legendX + i*120*dpr + 20*dpr, baseY, 12*dpr, "#586174", "left");
       });
     }
 
-    // ===== Chart 3: Score distribution (histogram) =====
+    // =========================
+    // Chart 3: Score histogram
+    // =========================
     function drawScoreHistogram(pairs){
       const {ctx,dpr,W,H} = getCanvasCtx();
       clearCanvas(ctx,W,H);
@@ -526,7 +563,7 @@
       const innerW=W-padL-padR, innerH=H-padT-padB;
 
       if (!pairs.length){
-        text(ctx, "No score data yet.", padL, padT + 24*dpr, 14*dpr, "#586174");
+        drawText(ctx, "No score data yet.", padL, padT + 24*dpr, 14*dpr, "#586174");
         return;
       }
 
@@ -538,15 +575,14 @@
       });
       const maxCount = Math.max(1, ...hist);
 
-      // axes
-      ctx.strokeStyle="#cfd4e6"; ctx.lineWidth=1*dpr;
+      ctx.strokeStyle="#cfd4e6";
+      ctx.lineWidth=1*dpr;
       ctx.beginPath();
-      ctx.moveTo(padL, padT);
-      ctx.lineTo(padL, padT+innerH);
-      ctx.lineTo(padL+innerW, padT+innerH);
+      ctx.moveTo(padL,padT);
+      ctx.lineTo(padL,padT+innerH);
+      ctx.lineTo(padL+innerW,padT+innerH);
       ctx.stroke();
 
-      // bars (0..total)
       const n = hist.length;
       const gap = 4*dpr;
       const barW = Math.max(6*dpr, (innerW - gap*(n-1)) / n);
@@ -558,17 +594,18 @@
         ctx.fillStyle = KAIST_BLUE;
         ctx.fillRect(x, y, barW, h);
 
-        // x ticks (show every 1 if <=12, else step)
         const step = (total <= 12) ? 1 : Math.ceil(total/12);
         if (i % step === 0 || i === total){
-          text(ctx, String(i), x + barW*0.5, padT+innerH+28*dpr, 12*dpr, "#111", "center");
+          drawText(ctx, String(i), x + barW*0.5, padT+innerH+28*dpr, 12*dpr, "#111", "center");
         }
       });
 
-      // axis label
-      text(ctx, "Score (0.." + total + ")", padL, padT + innerH + 56*dpr, 12*dpr, "#586174", "left");
+      drawText(ctx, "Score (0.." + total + ")", padL, padT + innerH + 56*dpr, 12*dpr, "#586174", "left");
     }
 
+    // =========================
+    // Chart switching
+    // =========================
     function setActiveTab(which){
       activeChart = which;
       $("tabWrong").classList.toggle("active", which==="wrong");
@@ -584,7 +621,7 @@
         $("chartCaption").textContent = "Wrong rate top list (based on Stats sheet).";
         drawWrongRate(statsRows);
       } else if (activeChart==="picks"){
-        $("chartCaption").textContent = "Option pick counts per question (bars=Pick0..Pick3).";
+        $("chartCaption").textContent = "Option pick counts per question (bars = Pick0..Pick3).";
         drawOptionPicks(statsRows);
       } else {
         const total = scorePairs.length ? (scorePairs[0].total || 0) : 0;
@@ -593,42 +630,29 @@
       }
     }
 
-    async function loadTeacherData(){
-      $("statsStatus").textContent = "Loading stats/scores…";
-      try{
-        await loadTeacherLinks();
-        const [st, sc] = await Promise.all([loadStats(), loadScores()]);
-        $("statsStatus").textContent = `Loaded stats/scores for ${LECTURE}.`;
-        renderChart();
-      }catch(e){
-        $("statsStatus").textContent = "Load failed: " + (e?.message || "unknown");
-      }
-    }
-
-    function revealTeacherUI(){
-      $("teacherCard").classList.remove("hidden");
-      document.querySelectorAll(".teacher-only").forEach(el => el.classList.remove("hidden"));
-      loadTeacherData();
-    }
-
-    // ===== Events =====
     $("tabWrong").addEventListener("click", ()=>setActiveTab("wrong"));
     $("tabPicks").addEventListener("click", ()=>setActiveTab("picks"));
     $("tabScore").addEventListener("click", ()=>setActiveTab("score"));
     window.addEventListener("resize", ()=>{ if(TEACHER_MODE) renderChart(); });
 
+    // =========================
+    // Teacher mode
+    // =========================
     $("btnTeacher").addEventListener("click", () => {
       const pw = prompt("Teacher password:");
       if (pw === TEACHER_PASSWORD) {
         TEACHER_MODE = true;
         $("teacherStatus").textContent = "✅ Password accepted → Correct answers & explanations are visible immediately.";
-        revealTeacherUI(); // ✅ immediately show + load charts
+        revealTeacherUI();
         alert("Teacher Mode enabled.");
       } else {
         alert("Wrong password.");
       }
     });
 
+    // =========================
+    // Student flow
+    // =========================
     $("btnStart").addEventListener("click", () => {
       const sid = $("studentId").value.trim();
       if (!sid) { alert("Please enter Student ID."); return; }
@@ -676,7 +700,6 @@
       $("summaryLine").textContent = `Student ID: ${sid} · Total questions: ${total}`;
       $("scoreLine").textContent = `${correct} / ${total}`;
 
-      // If teacher already enabled, refresh stats after submit
       if (TEACHER_MODE){
         await loadTeacherData();
       }
@@ -684,8 +707,30 @@
       window.scrollTo({ top: $("summaryCard").offsetTop - 8, behavior: "smooth" });
     });
 
+    // =========================
+    // Teacher UI
+    // =========================
+    async function loadTeacherData(){
+      $("statsStatus").textContent = "Loading stats/scores…";
+      try{
+        await loadTeacherLinks();
+        await Promise.all([loadStats(), loadScores()]);
+        $("statsStatus").textContent = `Loaded stats/scores for ${LECTURE}.`;
+        renderChart();
+      } catch(e){
+        $("statsStatus").textContent = "Load failed: " + (e?.message || "unknown");
+      }
+    }
+
+    function revealTeacherUI(){
+      $("teacherCard").classList.remove("hidden");
+      document.querySelectorAll(".teacher-only").forEach(el => el.classList.remove("hidden"));
+      loadTeacherData();
+    }
+
     // init
     loadQuestions();
+    setActiveTab("wrong");
   </script>
 </body>
 </html>
