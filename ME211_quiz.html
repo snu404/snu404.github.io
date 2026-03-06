@@ -10,22 +10,22 @@
     header{
       background:#fff; border-bottom:1px solid #e5e7f2;
       padding:12px 16px; display:flex; align-items:center; justify-content:space-between;
-      gap: 12px;
+      gap:12px;
     }
-    .header-left{ display:flex; align-items:center; gap:16px; min-width: 0; }
+    .header-left{ display:flex; align-items:center; gap:16px; min-width:0; }
     .logo{ height:44px; }
     .titlewrap{ min-width:0; }
     .titlewrap h1{ margin:0; font-size:18px; font-weight:800; line-height:1.15; }
     .titlewrap .sub{ margin-top:6px; font-size:12px; color:#586174; }
     .qr{ width:74px; height:74px; border-radius:10px; border:1px solid #eef0f7; background:#fff; }
 
-    main { max-width: 860px; margin: 0 auto; padding: 16px; }
-    .card { background:#fff; border-radius: 14px; padding: 14px; box-shadow: 0 8px 22px rgba(0,0,0,.08); margin-bottom: 12px; }
-    .muted { color:#586174; font-size: 13px; }
+    main { max-width:860px; margin:0 auto; padding:16px; }
+    .card { background:#fff; border-radius:14px; padding:14px; box-shadow:0 8px 22px rgba(0,0,0,.08); margin-bottom:12px; }
+    .muted { color:#586174; font-size:13px; }
     .small { font-size:12px; }
     input[type="text"]{
-      width:100%; padding:10px 12px; border:1px solid #d9dbe7; border-radius: 10px;
-      font-size: 14px; box-sizing:border-box;
+      width:100%; padding:10px 12px; border:1px solid #d9dbe7; border-radius:10px;
+      font-size:14px; box-sizing:border-box;
     }
     button { border:0; border-radius:10px; padding:10px 12px; font-weight:800; cursor:pointer; }
     button.primary{ background:#111; color:#fff; }
@@ -33,17 +33,16 @@
     button:disabled{ opacity:.5; cursor:not-allowed; }
     .divider{ height:1px; background:#eef0f7; margin:12px 0; }
 
-    .qtitle { font-weight: 900; margin-bottom: 10px; }
-    .opt { display:block; padding: 10px 10px; border: 1px solid #dde0ee; border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
-    .opt input { margin-right: 8px; }
+    .qtitle { font-weight:900; margin-bottom:10px; }
+    .opt { display:block; padding:10px 10px; border:1px solid #dde0ee; border-radius:10px; margin-bottom:8px; cursor:pointer; }
+    .opt input { margin-right:8px; }
     .qimg{ max-width:100%; border-radius:12px; margin:10px 0; border:1px solid #eef0f7; }
 
     .hidden { display:none !important; }
-    .teacher { border: 1px dashed #b7bdff; background: #fbfbff; }
+    .teacher { border:1px dashed #b7bdff; background:#fbfbff; }
     .linkbtn { text-decoration:none; display:inline-flex; align-items:center; gap:8px; }
     .pill { padding:6px 10px; border-radius:999px; background:#eef0ff; color:#2431a5; font-size:12px; font-weight:800; }
 
-    /* Layout: prevent overlap */
     .row{
       display:flex;
       gap:10px;
@@ -51,15 +50,15 @@
       align-items:flex-start;
     }
     .grow{
-      flex: 1 1 360px;
-      min-width: 260px;
+      flex:1 1 360px;
+      min-width:260px;
     }
     .actions{
-      flex: 0 0 auto;
+      flex:0 0 auto;
       display:flex;
       gap:10px;
       flex-wrap:wrap;
-      min-width: 220px;
+      min-width:220px;
     }
     .actions button{ white-space:nowrap; }
 
@@ -81,8 +80,8 @@
       <img class="logo" src="KAIST_logo.jpg" alt="KAIST logo" />
       <div class="titlewrap">
         <h1 id="title">ME211 Quiz</h1>
-        <div class="sub" id="subtitle">Enter Student ID → Start → Submit. Teacher Mode shows answers after submit.</div>
         <div class="sub"><span class="pill" id="lecturePill"></span></div>
+        <div class="sub" id="subtitle">Enter Student ID → Start → Submit. Teacher Mode shows answers, explanations, and stats.</div>
       </div>
     </div>
     <img id="qrImg" class="qr" alt="QR code" />
@@ -111,12 +110,12 @@
     <div class="card teacher hidden" id="teacherCard">
       <div class="qtitle">Teacher Mode</div>
       <div class="muted" style="margin-bottom:10px;">
-        Post-Quiz Statistics & links are visible in Teacher Mode. Correct answers & explanations become visible after Submit.
+        Correct answers & explanations are visible immediately in Teacher Mode. Post-quiz statistics and sheet links are also shown below.
       </div>
 
       <div class="divider"></div>
       <div class="qtitle">Post-Quiz Statistics</div>
-      <div class="muted small" id="statsStatus">Statistics will appear after quiz submission.</div>
+      <div class="muted small" id="statsStatus">Statistics will appear here.</div>
       <div id="statsTableWrap"></div>
 
       <div class="divider"></div>
@@ -153,10 +152,7 @@
     // =========================
     const DEFAULT_LECTURE = "Lecture 3";
     const TEACHER_PASSWORD = "1730";
-
-    // ✅ Apps Script Web App URL
     const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzZljM3azXE-1C_DeUG4uICGeuk8WlbDpFxhnMnPNTtI2VIwOcYJOvGYtnhCKQgQlZ2Nw/exec";
-
     const JSONP_CALLBACK = "initQuizFromServer";
 
     let TEACHER_MODE = false;
@@ -172,12 +168,9 @@
 
     const LECTURE = getLectureFromUrl();
 
-    // Title
-    $("title").textContent = `ME211 Quiz`;
     $("lecturePill").textContent = LECTURE;
     document.title = `ME211 Quiz - ${LECTURE}`;
 
-    // QR code points to current URL (with lecture param)
     (function initQR(){
       const url = location.href;
       $("qrImg").src = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" + encodeURIComponent(url);
@@ -190,7 +183,6 @@
         .replaceAll("'","&#039;");
     }
 
-    // ===== JSONP helper (CORS-free for Apps Script GET endpoints) =====
     function jsonp(url){
       return new Promise((resolve, reject) => {
         const cb = "cb_" + Math.random().toString(36).slice(2);
@@ -212,7 +204,9 @@
       });
     }
 
-    // JSONP loader (questions)
+    // =========================
+    // Questions load
+    // =========================
     function loadQuestions() {
       if (!WEBAPP_URL || WEBAPP_URL.includes("PUT_YOUR_WEBAPP_URL_HERE")) {
         $("loadStatus").textContent = "ERROR: WebApp URL not set.";
@@ -286,7 +280,7 @@
     }
 
     function allAnswered(){
-      for (let i=0;i<quiz.length;i++){
+      for (let i = 0; i < quiz.length; i++){
         if (!document.querySelector(`input[name="q${i}"]:checked`)) return false;
       }
       return true;
@@ -297,15 +291,11 @@
       $("btnSubmit").disabled = true;
       $("btnStart").disabled = true;
       $("studentId").disabled = true;
-      // Teacher mode should remain usable for professor after submit,
-      // but we keep button disabled to avoid confusion in student flow.
-      // If you want it enabled, comment out next line.
-      $("btnTeacher").disabled = true;
     }
 
     function gradeAndMark(){
       let correct = 0;
-      for (let i=0;i<quiz.length;i++){
+      for (let i = 0; i < quiz.length; i++){
         const checked = document.querySelector(`input[name="q${i}"]:checked`);
         const picked = checked ? parseInt(checked.value, 10) : -1;
 
@@ -329,7 +319,6 @@
     }
 
     async function saveToSheet(payload){
-      // NOTE: no-cors means we can't read the response; but it avoids CORS issues for POST.
       await fetch(WEBAPP_URL, {
         method: "POST",
         mode: "no-cors",
@@ -340,10 +329,12 @@
 
     function pct(x){
       if (!isFinite(x)) return "-";
-      return (x*100).toFixed(1) + "%";
+      return (x * 100).toFixed(1) + "%";
     }
 
-    // ===== Teacher links (JSONP; CORS-free) =====
+    // =========================
+    // Teacher Mode helpers
+    // =========================
     async function loadTeacherLinks(){
       try{
         $("teacherLinksStatus").textContent = "Loading links…";
@@ -357,14 +348,13 @@
         $("btnOpenStats").href = data.resultsUrl;
 
         $("teacherLinksStatus").textContent =
-          `Tabs: Gradebook, ${data.statsTab || ("Stats - "+LECTURE)}, and ${LECTURE} (results log).`;
+          `Tabs: Gradebook, ${data.statsTab || ("Stats - " + LECTURE)}, and ${LECTURE} (results log).`;
       } catch(e){
         $("teacherLinksStatus").textContent =
           "Link load failed: " + (e?.message || "unknown");
       }
     }
 
-    // ===== Stats (JSONP; CORS-free) =====
     async function loadStatsAndRender(){
       try{
         $("statsStatus").textContent = "Loading stats…";
@@ -374,12 +364,17 @@
         if (!data.ok) throw new Error(data.message || "stats not ok");
 
         const rows = data.rows || [];
-        if (!rows.length) throw new Error("No stats rows.");
+        if (!rows.length) {
+          $("statsStatus").textContent = "No submissions yet. (0 attempts)";
+          $("statsTableWrap").innerHTML = "";
+          $("statsTableWrap").classList.add("hidden");
+          return;
+        }
 
         const topWrong = [...rows]
-          .filter(r => (r.attempts||0) > 0)
-          .sort((a,b) => (b.wrongRate||0) - (a.wrongRate||0))
-          .slice(0,3);
+          .filter(r => (r.attempts || 0) > 0)
+          .sort((a, b) => (b.wrongRate || 0) - (a.wrongRate || 0))
+          .slice(0, 3);
 
         let html = "";
         html += `<div class="muted small">Top wrong questions: ` +
@@ -392,16 +387,19 @@
           <th>Pick0</th><th>Pick1</th><th>Pick2</th><th>Pick3</th>
         </tr></thead><tbody>`;
 
-        rows.forEach(r=>{
-          const wrongHigh = (r.wrongRate||0) >= 0.5 && (r.attempts||0) >= 5;
+        rows.forEach(r => {
+          const wrongHigh = (r.wrongRate || 0) >= 0.5 && (r.attempts || 0) >= 5;
           html += `<tr>
             <td>${wrongHigh ? `<span class="bad">Q${r.q}</span>` : `Q${r.q}`}</td>
-            <td>${r.attempts||0}</td>
-            <td>${r.correct||0}</td>
-            <td>${r.incorrect||0}</td>
-            <td>${pct(r.correctRate||0)}</td>
-            <td>${pct(r.wrongRate||0)}</td>
-            <td>${r.pick0||0}</td><td>${r.pick1||0}</td><td>${r.pick2||0}</td><td>${r.pick3||0}</td>
+            <td>${r.attempts || 0}</td>
+            <td>${r.correct || 0}</td>
+            <td>${r.incorrect || 0}</td>
+            <td>${pct(r.correctRate || 0)}</td>
+            <td>${pct(r.wrongRate || 0)}</td>
+            <td>${r.pick0 || 0}</td>
+            <td>${r.pick1 || 0}</td>
+            <td>${r.pick2 || 0}</td>
+            <td>${r.pick3 || 0}</td>
           </tr>`;
         });
 
@@ -417,25 +415,26 @@
       }
     }
 
-    // ✅ Teacher panel can be shown immediately after password, without Submit
     function showTeacherPanel(){
       $("teacherCard").classList.remove("hidden");
       loadTeacherLinks();
       loadStatsAndRender();
     }
 
-    // ✅ Correct answers/explanations are revealed only after Submit
     function revealTeacherAnswers(){
       document.querySelectorAll(".teacher-only").forEach(el => el.classList.remove("hidden"));
     }
 
-    // Teacher mode toggle
+    // =========================
+    // Events
+    // =========================
     $("btnTeacher").addEventListener("click", () => {
       const pw = prompt("Teacher password:");
       if (pw === TEACHER_PASSWORD) {
         TEACHER_MODE = true;
         alert("Teacher Mode enabled.");
-        showTeacherPanel(); // ✅ stats/links without submit
+        showTeacherPanel();
+        revealTeacherAnswers(); // ✅ 비번 입력 즉시 정답/해설 표시
       } else {
         alert("Wrong password.");
       }
@@ -460,7 +459,7 @@
 
       const answers = quiz.map((q, i) => {
         const picked = parseInt(document.querySelector(`input[name="q${i}"]:checked`).value, 10);
-        return { i: i+1, picked, correct: q.answer, ok: picked === q.answer };
+        return { i: i + 1, picked, correct: q.answer, ok: picked === q.answer };
       });
 
       const payload = {
@@ -488,7 +487,6 @@
       $("summaryLine").textContent = `Student ID: ${sid} · Total questions: ${total}`;
       $("scoreLine").textContent = `${correct} / ${total}`;
 
-      // After submit: if teacher mode is active, reveal answers and refresh stats
       if (TEACHER_MODE) {
         showTeacherPanel();
         revealTeacherAnswers();
@@ -497,6 +495,9 @@
       window.scrollTo({ top: $("summaryCard").offsetTop - 8, behavior: "smooth" });
     });
 
+    // =========================
+    // Init
+    // =========================
     loadQuestions();
   </script>
 </body>
