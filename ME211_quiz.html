@@ -23,7 +23,10 @@
     .card { background:#fff; border-radius: 14px; padding: 14px; box-shadow: 0 8px 22px rgba(0,0,0,.08); margin-bottom: 12px; }
     .muted { color:#586174; font-size: 13px; }
     .small { font-size:12px; }
-    input[type="text"]{ width:100%; padding:10px 12px; border:1px solid #d9dbe7; border-radius: 10px; font-size: 14px; box-sizing:border-box; }
+    input[type="text"]{
+      width:100%; padding:10px 12px; border:1px solid #d9dbe7; border-radius: 10px;
+      font-size: 14px; box-sizing:border-box;
+    }
     button { border:0; border-radius:10px; padding:10px 12px; font-weight:800; cursor:pointer; }
     button.primary{ background:#111; color:#fff; }
     button.secondary{ background:#e9ebf5; color:#111; }
@@ -108,7 +111,7 @@
     <div class="card teacher hidden" id="teacherCard">
       <div class="qtitle">Teacher Mode</div>
       <div class="muted" style="margin-bottom:10px;">
-        Correct answers & explanations become visible after Submit.
+        Post-Quiz Statistics & links are visible in Teacher Mode. Correct answers & explanations become visible after Submit.
       </div>
 
       <div class="divider"></div>
@@ -294,6 +297,9 @@
       $("btnSubmit").disabled = true;
       $("btnStart").disabled = true;
       $("studentId").disabled = true;
+      // Teacher mode should remain usable for professor after submit,
+      // but we keep button disabled to avoid confusion in student flow.
+      // If you want it enabled, comment out next line.
       $("btnTeacher").disabled = true;
     }
 
@@ -332,6 +338,11 @@
       });
     }
 
+    function pct(x){
+      if (!isFinite(x)) return "-";
+      return (x*100).toFixed(1) + "%";
+    }
+
     // ===== Teacher links (JSONP; CORS-free) =====
     async function loadTeacherLinks(){
       try{
@@ -351,11 +362,6 @@
         $("teacherLinksStatus").textContent =
           "Link load failed: " + (e?.message || "unknown");
       }
-    }
-
-    function pct(x){
-      if (!isFinite(x)) return "-";
-      return (x*100).toFixed(1) + "%";
     }
 
     // ===== Stats (JSONP; CORS-free) =====
@@ -411,19 +417,25 @@
       }
     }
 
-    function revealTeacherDetails(){
-      if (!TEACHER_MODE) return;
+    // ✅ Teacher panel can be shown immediately after password, without Submit
+    function showTeacherPanel(){
       $("teacherCard").classList.remove("hidden");
-      document.querySelectorAll(".teacher-only").forEach(el => el.classList.remove("hidden"));
       loadTeacherLinks();
       loadStatsAndRender();
     }
 
+    // ✅ Correct answers/explanations are revealed only after Submit
+    function revealTeacherAnswers(){
+      document.querySelectorAll(".teacher-only").forEach(el => el.classList.remove("hidden"));
+    }
+
+    // Teacher mode toggle
     $("btnTeacher").addEventListener("click", () => {
       const pw = prompt("Teacher password:");
       if (pw === TEACHER_PASSWORD) {
         TEACHER_MODE = true;
         alert("Teacher Mode enabled.");
+        showTeacherPanel(); // ✅ stats/links without submit
       } else {
         alert("Wrong password.");
       }
@@ -476,7 +488,12 @@
       $("summaryLine").textContent = `Student ID: ${sid} · Total questions: ${total}`;
       $("scoreLine").textContent = `${correct} / ${total}`;
 
-      revealTeacherDetails();
+      // After submit: if teacher mode is active, reveal answers and refresh stats
+      if (TEACHER_MODE) {
+        showTeacherPanel();
+        revealTeacherAnswers();
+      }
+
       window.scrollTo({ top: $("summaryCard").offsetTop - 8, behavior: "smooth" });
     });
 
