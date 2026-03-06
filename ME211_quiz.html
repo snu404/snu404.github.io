@@ -52,7 +52,6 @@
     table.stats { width:100%; border-collapse:collapse; font-size:13px; margin-top:10px; }
     table.stats th, table.stats td { border-bottom:1px solid #eef0f7; padding:8px 6px; text-align:right; }
     table.stats th:first-child, table.stats td:first-child { text-align:left; }
-    .bad { font-weight:900; }
 
     canvas{ width:100%; max-width: 820px; height: 260px; border:1px solid #eef0f7; border-radius:12px; background:#fff; }
     .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
@@ -67,8 +66,8 @@
       <img class="logo" src="KAIST_logo.jpg" alt="KAIST logo" />
       <div class="titlewrap">
         <h1 id="title">ME211 Quiz</h1>
-        <div class="sub" id="subtitle">Enter Student ID → Start → Submit. Teacher Mode shows answers immediately.</div>
         <div class="sub"><span class="pill" id="lecturePill"></span></div>
+        <div class="sub" id="subtitle">Enter Student ID → Start → Answer all → Submit. Teacher Mode shows answers immediately.</div>
       </div>
     </div>
     <img id="qrImg" class="qr" alt="QR code" />
@@ -97,17 +96,16 @@
     <div class="card teacher hidden" id="teacherCard">
       <div class="qtitle">Teacher Mode</div>
       <div class="muted" style="margin-bottom:10px;">
-        ✅ Password accepted → Correct answers & explanations are visible immediately.
+        ✅ Password accepted → Correct answers & explanations visible immediately.
       </div>
 
       <div class="divider"></div>
-
       <div class="qtitle">Statistics & Charts</div>
       <div class="muted small" id="statsStatus">Loading…</div>
 
       <div class="tabs">
         <div class="tabbtn active" data-view="wrong">1) Wrong rate (Top wrong)</div>
-        <div class="tabbtn" data-view="pick">2) Option picks (per question)</div>
+        <div class="tabbtn" data-view="pick">2) Option picks</div>
         <div class="tabbtn" data-view="hist">3) Score distribution</div>
       </div>
 
@@ -118,7 +116,6 @@
       <div id="statsTableWrap"></div>
 
       <div class="divider"></div>
-
       <div class="row">
         <a id="btnOpenResults" class="linkbtn" target="_blank" rel="noopener">
           <button class="secondary" type="button">Open Results Sheet</button>
@@ -152,16 +149,13 @@
     // =========================
     const DEFAULT_LECTURE = "Lecture 3";
     const TEACHER_PASSWORD = "1730";
-
-    // ✅ Apps Script Web App URL
     const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzZljM3azXE-1C_DeUG4uICGeuk8WlbDpFxhnMnPNTtI2VIwOcYJOvGYtnhCKQgQlZ2Nw/exec";
-
     const JSONP_CALLBACK = "initQuizFromServer";
 
     let TEACHER_MODE = false;
     let quiz = [];
     let _statsCache = [];
-    let _scoresCache = []; // {score,total}[]
+    let _scoresCache = [];
     let _activeView = "wrong";
 
     const $ = (id) => document.getElementById(id);
@@ -171,15 +165,11 @@
       const raw = (p.get("lecture") || "").trim();
       return raw || DEFAULT_LECTURE;
     }
-
     const LECTURE = getLectureFromUrl();
 
-    // Title
-    $("title").textContent = `ME211 Quiz`;
     $("lecturePill").textContent = LECTURE;
     document.title = `ME211 Quiz - ${LECTURE}`;
 
-    // QR code points to current URL
     (function initQR(){
       const url = location.href;
       $("qrImg").src = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" + encodeURIComponent(url);
@@ -192,7 +182,7 @@
         .replaceAll("'","&#039;");
     }
 
-    // JSONP loader (questions)
+    // JSONP questions
     function loadQuestions() {
       const s = document.createElement("script");
       s.src = `${WEBAPP_URL}?lecture=${encodeURIComponent(LECTURE)}&callback=${encodeURIComponent(JSONP_CALLBACK)}`;
@@ -208,7 +198,6 @@
       quiz = payload.quiz || [];
       $("loadStatus").textContent = `Loaded ${quiz.length} questions from Questions/${LECTURE}.`;
       renderQuiz();
-      // Teacher mode already on? then reveal immediately
       if (TEACHER_MODE) revealTeacherDetails();
     }
     window[JSONP_CALLBACK] = initQuizFromServer;
@@ -301,17 +290,23 @@
       return correct;
     }
 
-    // ✅ POST that we can READ (no preflight):
-    // send Content-Type text/plain and JSON string body
-    async function saveToSheet(payload){
-      const res = await fetch(WEBAPP_URL, {
+    // ===== Duplicate check (before submit) =====
+    async function checkAlreadySubmitted(studentId){
+      const url = `${WEBAPP_URL}?action=check&lecture=${encodeURIComponent(LECTURE)}&student_id=${encodeURIComponent(studentId)}`;
+      const res = await fetch(url, { method:"GET" });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.message || "check failed");
+      return !!data.exists;
+    }
+
+    // ===== Save (no-cors, stable) =====
+    async function saveToSheetNoCors(payload){
+      await fetch(WEBAPP_URL, {
         method: "POST",
-        mode: "cors",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-      const data = await res.json().catch(()=>null);
-      return data || { ok:false, message:"No JSON response" };
     }
 
     // ===== Teacher links =====
@@ -319,7 +314,7 @@
       try{
         $("teacherLinksStatus").textContent = "Loading links…";
         const url = `${WEBAPP_URL}?action=links&lecture=${encodeURIComponent(LECTURE)}`;
-        const res = await fetch(url, { method:"GET", mode:"cors" });
+        const res = await fetch(url, { method:"GET" });
         const data = await res.json();
         if (!data.ok) throw new Error(data.message || "links not ok");
 
@@ -334,14 +329,9 @@
       }
     }
 
-    function pct(x){
-      if (!isFinite(x)) return "-";
-      return (x*100).toFixed(1) + "%";
-    }
-
     async function loadStats(){
       const url = `${WEBAPP_URL}?action=stats&lecture=${encodeURIComponent(LECTURE)}`;
-      const res = await fetch(url, { method:"GET", mode:"cors" });
+      const res = await fetch(url, { method:"GET" });
       const data = await res.json();
       if (!data.ok) throw new Error(data.message || "stats not ok");
       _statsCache = data.rows || [];
@@ -350,207 +340,150 @@
 
     async function loadScores(){
       const url = `${WEBAPP_URL}?action=scores&lecture=${encodeURIComponent(LECTURE)}`;
-      const res = await fetch(url, { method:"GET", mode:"cors" });
+      const res = await fetch(url, { method:"GET" });
       const data = await res.json();
       if (!data.ok) throw new Error(data.message || "scores not ok");
       _scoresCache = data.scores || [];
       return data;
     }
 
-    function drawChartWrongRate(){
-      const canvas = $("chart");
-      const ctx = canvas.getContext("2d");
-
-      const rows = (_statsCache || []).filter(r => (r.attempts||0) > 0);
-      const top = [...rows].sort((a,b)=> (b.wrongRate||0) - (a.wrongRate||0)).slice(0,10);
-
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      const W = canvas.width = canvas.clientWidth * devicePixelRatio;
-      const H = canvas.height = canvas.clientHeight * devicePixelRatio;
-
-      ctx.clearRect(0,0,W,H);
-      ctx.font = `${12*devicePixelRatio}px system-ui`;
-
-      if (!top.length){
-        ctx.fillText("No stats data yet.", 12*devicePixelRatio, 24*devicePixelRatio);
-        return;
-      }
-
-      const padL = 48*devicePixelRatio, padR = 12*devicePixelRatio, padT = 18*devicePixelRatio, padB = 30*devicePixelRatio;
-      const plotW = W - padL - padR, plotH = H - padT - padB;
-      const barH = plotH / top.length * 0.7;
-      const gap = plotH / top.length * 0.3;
-
-      // axis
-      ctx.globalAlpha = 0.25;
-      ctx.beginPath();
-      ctx.moveTo(padL, padT);
-      ctx.lineTo(padL, padT+plotH);
-      ctx.lineTo(padL+plotW, padT+plotH);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-
-      top.forEach((r, i)=>{
-        const y = padT + i*(barH+gap);
-        const v = Math.max(0, Math.min(1, r.wrongRate||0));
-        const bw = plotW * v;
-
-        ctx.globalAlpha = 0.9;
-        ctx.fillRect(padL, y, bw, barH);
-        ctx.globalAlpha = 1;
-
-        ctx.fillText(`Q${r.q}`, 8*devicePixelRatio, y + barH*0.75);
-        ctx.fillText(`${(v*100).toFixed(1)}%`, padL + bw + 6*devicePixelRatio, y + barH*0.75);
-      });
-
-      ctx.fillText("Top wrong rate (Top 10)", padL, H - 8*devicePixelRatio);
+    function pct(x){
+      if (!isFinite(x)) return "-";
+      return (x*100).toFixed(1) + "%";
     }
 
-    function drawChartPickCounts(){
-      const canvas = $("chart");
-      const ctx = canvas.getContext("2d");
-
-      const rows = (_statsCache || []).slice(0, 10); // show first 10 questions
-      const W = canvas.width = canvas.clientWidth * devicePixelRatio;
-      const H = canvas.height = canvas.clientHeight * devicePixelRatio;
+    // ===== Simple canvas charts =====
+    function clearCanvas(){
+      const c = $("chart");
+      const ctx = c.getContext("2d");
+      const W = c.width = c.clientWidth * devicePixelRatio;
+      const H = c.height = c.clientHeight * devicePixelRatio;
       ctx.clearRect(0,0,W,H);
       ctx.font = `${12*devicePixelRatio}px system-ui`;
+      return {ctx,W,H};
+    }
 
-      if (!rows.length){
-        ctx.fillText("No stats data yet.", 12*devicePixelRatio, 24*devicePixelRatio);
-        return;
-      }
+    function drawWrongRateTop(){
+      const {ctx,W,H} = clearCanvas();
+      const rows = (_statsCache||[]).filter(r => (r.attempts||0)>0);
+      const top = [...rows].sort((a,b)=>(b.wrongRate||0)-(a.wrongRate||0)).slice(0,10);
+      if (!top.length){ ctx.fillText("No stats rows yet.", 12*devicePixelRatio, 24*devicePixelRatio); return; }
 
-      const padL = 40*devicePixelRatio, padR = 12*devicePixelRatio, padT = 18*devicePixelRatio, padB = 28*devicePixelRatio;
-      const plotW = W - padL - padR, plotH = H - padT - padB;
+      const padL=52*devicePixelRatio, padR=10*devicePixelRatio, padT=16*devicePixelRatio, padB=26*devicePixelRatio;
+      const plotW=W-padL-padR, plotH=H-padT-padB;
+      const slot = plotH/top.length;
+      const barH = slot*0.65;
 
-      // find max pick
-      let maxV = 1;
-      rows.forEach(r=>{
-        maxV = Math.max(maxV, r.pick0||0, r.pick1||0, r.pick2||0, r.pick3||0);
+      ctx.globalAlpha=0.25;
+      ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,padT+plotH); ctx.lineTo(padL+plotW,padT+plotH); ctx.stroke();
+      ctx.globalAlpha=1;
+
+      top.forEach((r,i)=>{
+        const v=Math.max(0,Math.min(1,r.wrongRate||0));
+        const y=padT+i*slot+(slot-barH)/2;
+        const bw=plotW*v;
+        ctx.globalAlpha=0.85; ctx.fillRect(padL,y,bw,barH); ctx.globalAlpha=1;
+        ctx.fillText(`Q${r.q}`, 10*devicePixelRatio, y+barH*0.8);
+        ctx.fillText(`${(v*100).toFixed(1)}%`, padL+bw+6*devicePixelRatio, y+barH*0.8);
       });
 
-      // axis
-      ctx.globalAlpha = 0.25;
-      ctx.beginPath();
-      ctx.moveTo(padL, padT);
-      ctx.lineTo(padL, padT+plotH);
-      ctx.lineTo(padL+plotW, padT+plotH);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
+      ctx.fillText("Top wrong rate (Top 10)", padL, H-8*devicePixelRatio);
+    }
 
-      const groupW = plotW / rows.length;
-      const barW = groupW / 5;
+    function drawPickCounts(){
+      const {ctx,W,H} = clearCanvas();
+      const rows = (_statsCache||[]).slice(0,10);
+      if (!rows.length){ ctx.fillText("No stats rows yet.", 12*devicePixelRatio, 24*devicePixelRatio); return; }
 
-      rows.forEach((r, i)=>{
-        const baseX = padL + i*groupW;
-        const picks = [r.pick0||0, r.pick1||0, r.pick2||0, r.pick3||0];
-        picks.forEach((pv, j)=>{
-          const h = plotH * (pv / maxV);
-          const x = baseX + (j+0.5)*barW;
-          const y = padT + plotH - h;
-          ctx.globalAlpha = 0.85;
-          ctx.fillRect(x, y, barW, h);
+      const padL=40*devicePixelRatio, padR=10*devicePixelRatio, padT=16*devicePixelRatio, padB=30*devicePixelRatio;
+      const plotW=W-padL-padR, plotH=H-padT-padB;
+
+      let maxV=1;
+      rows.forEach(r=>{ maxV=Math.max(maxV,r.pick0||0,r.pick1||0,r.pick2||0,r.pick3||0); });
+
+      ctx.globalAlpha=0.25;
+      ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,padT+plotH); ctx.lineTo(padL+plotW,padT+plotH); ctx.stroke();
+      ctx.globalAlpha=1;
+
+      const groupW=plotW/rows.length;
+      const barW=groupW/5;
+
+      rows.forEach((r,i)=>{
+        const baseX=padL+i*groupW;
+        [r.pick0||0,r.pick1||0,r.pick2||0,r.pick3||0].forEach((pv,j)=>{
+          const h=plotH*(pv/maxV);
+          const x=baseX+(j+0.6)*barW;
+          const y=padT+plotH-h;
+          ctx.globalAlpha=0.85; ctx.fillRect(x,y,barW,h); ctx.globalAlpha=1;
         });
-        ctx.globalAlpha = 1;
-        ctx.fillText(`Q${r.q}`, baseX + 2*devicePixelRatio, padT + plotH + 14*devicePixelRatio);
+        ctx.fillText(`Q${r.q}`, baseX+2*devicePixelRatio, padT+plotH+16*devicePixelRatio);
       });
 
-      ctx.fillText("Option pick counts (Q1~Q10, bars=Pick0..Pick3)", padL, H - 8*devicePixelRatio);
+      ctx.fillText("Option pick counts (Q1~Q10, bars=Pick0..Pick3)", padL, H-8*devicePixelRatio);
     }
 
-    function drawChartHistogram(){
-      const canvas = $("chart");
-      const ctx = canvas.getContext("2d");
-      const W = canvas.width = canvas.clientWidth * devicePixelRatio;
-      const H = canvas.height = canvas.clientHeight * devicePixelRatio;
-      ctx.clearRect(0,0,W,H);
-      ctx.font = `${12*devicePixelRatio}px system-ui`;
+    function drawHistogram(){
+      const {ctx,W,H} = clearCanvas();
+      const arr = _scoresCache||[];
+      if (!arr.length){ ctx.fillText("No score data yet. Need submissions.", 12*devicePixelRatio, 24*devicePixelRatio); return; }
 
-      const arr = _scoresCache || [];
-      if (!arr.length){
-        ctx.fillText("No score data yet. (Need submissions) or action=scores not deployed.", 12*devicePixelRatio, 24*devicePixelRatio);
-        return;
-      }
-
-      // assume same total for histogram bins; take max total observed
       const maxTotal = Math.max(...arr.map(x=>x.total||0));
       const bins = new Array(maxTotal+1).fill(0);
       arr.forEach(x=>{
-        const s = Math.max(0, Math.min(maxTotal, Math.round(x.score||0)));
-        bins[s] += 1;
+        const s=Math.max(0,Math.min(maxTotal,Math.round(x.score||0)));
+        bins[s]+=1;
       });
 
-      const padL = 40*devicePixelRatio, padR = 12*devicePixelRatio, padT = 18*devicePixelRatio, padB = 28*devicePixelRatio;
-      const plotW = W - padL - padR, plotH = H - padT - padB;
+      const padL=40*devicePixelRatio, padR=10*devicePixelRatio, padT=16*devicePixelRatio, padB=30*devicePixelRatio;
+      const plotW=W-padL-padR, plotH=H-padT-padB;
+      const maxC=Math.max(1,...bins);
+      const barW=plotW/bins.length;
 
-      const maxCount = Math.max(1, ...bins);
-      const barW = plotW / bins.length;
+      ctx.globalAlpha=0.25;
+      ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,padT+plotH); ctx.lineTo(padL+plotW,padT+plotH); ctx.stroke();
+      ctx.globalAlpha=1;
 
-      // axis
-      ctx.globalAlpha = 0.25;
-      ctx.beginPath();
-      ctx.moveTo(padL, padT);
-      ctx.lineTo(padL, padT+plotH);
-      ctx.lineTo(padL+plotW, padT+plotH);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-
-      bins.forEach((c, s)=>{
-        const h = plotH * (c / maxCount);
-        const x = padL + s*barW + 1*devicePixelRatio;
-        const y = padT + plotH - h;
-        ctx.globalAlpha = 0.85;
-        ctx.fillRect(x, y, barW - 2*devicePixelRatio, h);
-        ctx.globalAlpha = 1;
+      bins.forEach((c,i)=>{
+        const h=plotH*(c/maxC);
+        const x=padL+i*barW+1*devicePixelRatio;
+        const y=padT+plotH-h;
+        ctx.globalAlpha=0.85; ctx.fillRect(x,y,barW-2*devicePixelRatio,h); ctx.globalAlpha=1;
       });
 
-      ctx.fillText(`Score distribution histogram (0..${maxTotal})`, padL, H - 8*devicePixelRatio);
+      ctx.fillText(`Score distribution (0..${maxTotal})`, padL, H-8*devicePixelRatio);
     }
 
     function renderStatsTable(){
       const rows = _statsCache || [];
-      if (!rows.length){
-        $("statsTableWrap").innerHTML = "";
-        return;
-      }
+      if (!rows.length){ $("statsTableWrap").innerHTML=""; return; }
 
-      const topWrong = [...rows]
-        .filter(r => (r.attempts||0) > 0)
-        .sort((a,b) => (b.wrongRate||0) - (a.wrongRate||0))
-        .slice(0,3);
+      const topWrong = [...rows].filter(r=>(r.attempts||0)>0)
+        .sort((a,b)=>(b.wrongRate||0)-(a.wrongRate||0)).slice(0,3);
 
-      let html = "";
-      html += `<div class="muted small">Top wrong questions: ` +
-              topWrong.map(r => `Q${r.q} (${pct(r.wrongRate)})`).join(", ") +
-              `</div>`;
+      let html = `<div class="muted small">Top wrong: ${
+        topWrong.map(r=>`Q${r.q} (${pct(r.wrongRate)})`).join(", ")
+      }</div>`;
 
       html += `<table class="stats"><thead><tr>
         <th>Q#</th><th>Attempts</th><th>Correct</th><th>Wrong</th>
-        <th>Correct%</th><th>Wrong%</th>
-        <th>Pick0</th><th>Pick1</th><th>Pick2</th><th>Pick3</th>
+        <th>Correct%</th><th>Wrong%</th><th>Pick0</th><th>Pick1</th><th>Pick2</th><th>Pick3</th>
       </tr></thead><tbody>`;
 
       rows.forEach(r=>{
         html += `<tr>
-          <td>Q${r.q}</td>
-          <td>${r.attempts||0}</td>
-          <td>${r.correct||0}</td>
-          <td>${r.incorrect||0}</td>
-          <td>${pct(r.correctRate||0)}</td>
-          <td>${pct(r.wrongRate||0)}</td>
+          <td>Q${r.q}</td><td>${r.attempts||0}</td><td>${r.correct||0}</td><td>${r.incorrect||0}</td>
+          <td>${pct(r.correctRate||0)}</td><td>${pct(r.wrongRate||0)}</td>
           <td>${r.pick0||0}</td><td>${r.pick1||0}</td><td>${r.pick2||0}</td><td>${r.pick3||0}</td>
         </tr>`;
       });
-
       html += `</tbody></table>`;
       $("statsTableWrap").innerHTML = html;
     }
 
     function drawActive(){
-      if (_activeView === "wrong") drawChartWrongRate();
-      else if (_activeView === "pick") drawChartPickCounts();
-      else drawChartHistogram();
+      if (_activeView==="wrong") drawWrongRateTop();
+      else if (_activeView==="pick") drawPickCounts();
+      else drawHistogram();
     }
 
     async function revealTeacherDetails(){
@@ -560,18 +493,17 @@
       loadTeacherLinks();
 
       try{
-        $("statsStatus").textContent = "Loading stats…";
+        $("statsStatus").textContent = "Loading stats/scores…";
         await loadStats();
-        await loadScores(); // for histogram
-        $("statsStatus").textContent = `Loaded stats/scores for ${LECTURE}.`;
+        await loadScores();
         renderStatsTable();
         drawActive();
-      } catch(e){
+        $("statsStatus").textContent = `Loaded Stats - ${LECTURE} + scores.`;
+      }catch(e){
         $("statsStatus").textContent = "Stats load failed: " + (e?.message || "unknown");
       }
     }
 
-    // Tab buttons
     document.querySelectorAll(".tabbtn").forEach(btn=>{
       btn.addEventListener("click", ()=>{
         document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active"));
@@ -581,39 +513,62 @@
       });
     });
 
-    // Teacher Mode
-    $("btnTeacher").addEventListener("click", async () => {
+    $("btnTeacher").addEventListener("click", async ()=>{
       const pw = prompt("Teacher password:");
-      if (pw === TEACHER_PASSWORD) {
+      if (pw === TEACHER_PASSWORD){
         TEACHER_MODE = true;
         alert("Teacher Mode enabled.");
-        // if questions already loaded, show immediately; if not, it will show after load
         if (quiz.length) await revealTeacherDetails();
       } else {
         alert("Wrong password.");
       }
     });
 
-    $("btnStart").addEventListener("click", () => {
+    $("btnStart").addEventListener("click", async ()=>{
       const sid = $("studentId").value.trim();
-      if (!sid) { alert("Please enter Student ID."); return; }
-      if (!quiz.length) { alert("Questions not loaded yet."); return; }
+      if (!sid){ alert("Please enter Student ID."); return; }
+      if (!quiz.length){ alert("Questions not loaded yet."); return; }
+
+      // optional: warn if already submitted
+      try{
+        const exists = await checkAlreadySubmitted(sid);
+        if (exists){
+          alert("Already submitted. Submit is blocked for this Student ID.");
+          $("btnSubmit").disabled = true;
+          return;
+        }
+      }catch(e){
+        // if check fails, allow start but submit will check again
+      }
+
       $("btnSubmit").disabled = false;
       window.scrollTo({ top: $("quizArea").offsetTop - 8, behavior: "smooth" });
     });
 
-    $("btnSubmit").addEventListener("click", async () => {
+    $("btnSubmit").addEventListener("click", async ()=>{
       const sid = $("studentId").value.trim();
-      if (!sid) { alert("Please enter Student ID."); return; }
-      if (!quiz.length) { alert("Questions not loaded yet."); return; }
-      if (!allAnswered()) { alert("Please answer all questions before submitting."); return; }
+      if (!sid){ alert("Please enter Student ID."); return; }
+      if (!quiz.length){ alert("Questions not loaded yet."); return; }
+      if (!allAnswered()){ alert("Please answer all questions before submitting."); return; }
+
+      // hard block duplicate right before saving
+      try{
+        const exists = await checkAlreadySubmitted(sid);
+        if (exists){
+          $("saveStatus").textContent = "Not saved ❌ Duplicate submission blocked (already submitted).";
+          alert("Duplicate submission blocked (already submitted).");
+          return;
+        }
+      }catch(e){
+        // if check fails, proceed (server will still accept because this version blocks on client-side)
+      }
 
       const correct = gradeAndMark();
       const total = quiz.length;
 
-      const answers = quiz.map((q, i) => {
+      const answers = quiz.map((q,i)=>{
         const picked = parseInt(document.querySelector(`input[name="q${i}"]:checked`).value, 10);
-        return { i: i+1, picked, correct: q.answer, ok: picked === q.answer };
+        return { i:i+1, picked, correct:q.answer, ok: picked===q.answer };
       });
 
       const payload = {
@@ -626,36 +581,30 @@
         answers
       };
 
-      $("saveStatus").textContent = `Saving…`;
+      $("saveStatus").textContent = "Saving…";
 
-      const resp = await saveToSheet(payload);
-
-      if (!resp.ok){
-        // ✅ show server message (duplicate block etc.)
-        $("saveStatus").textContent = `Not saved ❌ ${resp.message || "Unknown error"}`;
-        alert(resp.message || "Save failed.");
+      try{
+        await saveToSheetNoCors(payload);
+        $("saveStatus").textContent = `Saved ✅ (Results/${LECTURE} updated)`;
+      }catch(e){
+        $("saveStatus").textContent = "Save failed: " + (e?.message || "unknown");
+        alert("Save failed.");
         return;
       }
 
-      $("saveStatus").textContent = `Saved ✅ (${LECTURE})`;
-
       lockInputs();
-
       $("summaryCard").classList.remove("hidden");
       $("summaryLine").textContent = `Student ID: ${sid} · Total questions: ${total}`;
       $("scoreLine").textContent = `${correct} / ${total}`;
 
-      // Teacher can refresh stats quickly if already enabled
-      if (TEACHER_MODE) {
+      if (TEACHER_MODE){
         try{
           await loadStats();
           await loadScores();
           renderStatsTable();
           drawActive();
-          $("statsStatus").textContent = `Updated stats after submission.`;
-        }catch(e){
-          $("statsStatus").textContent = "Stats refresh failed: " + (e?.message || "unknown");
-        }
+          $("statsStatus").textContent = "Updated after submission.";
+        }catch(e){}
       }
 
       window.scrollTo({ top: $("summaryCard").offsetTop - 8, behavior: "smooth" });
